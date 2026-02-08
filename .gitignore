@@ -1,0 +1,49 @@
+# .gitignore
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+storage/uploads/* !storage/uploads/temp/
+storage/uploads/temp/*
+!storage/uploads/temp/.gitkeep
+coverage.html
+coverage.txt
+
+# Logs
+*.log
+logs/
+
+# Configs
+config.local.yaml

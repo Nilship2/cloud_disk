@@ -1,0 +1,52 @@
+# config.yaml
+server:
+  env: "development"  # development/production/test
+  port: 8080
+  host: "0.0.0.0"
+  read_timeout: 30
+  write_timeout: 30
+
+database:
+  driver: "mysql"
+  host: "localhost"
+  port: 3306
+  username: "root"
+  password: "password"
+  database: "cloud_disk"
+  charset: "utf8mb4"
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 3600
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 20
+
+storage:
+  type: "local"  # local/minio/s3
+  local:
+    base_path: "./storage/uploads"
+    temp_path: "./storage/uploads/temp"
+    max_size_mb: 100
+  minio:
+    endpoint: "localhost:9000"
+    access_key: "minioadmin"
+    secret_key: "minioadmin"
+    use_ssl: false
+    bucket_name: "cloud-disk"
+  s3:
+    region: "us-east-1"
+    bucket_name: "cloud-disk-bucket"
+
+jwt:
+  secret: "your-secret-key-change-in-production"
+  expires_hours: 24
+
+log:
+  level: "info"
+  format: "json"
+  output: "stdout"  # stdout/file
+  file_path: "./logs/app.log"

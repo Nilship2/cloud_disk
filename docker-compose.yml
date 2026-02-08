@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: cloud-disk-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: cloud_disk
+      MYSQL_USER: cloud_user
+      MYSQL_PASSWORD: cloud_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/database/migrations:/docker-entrypoint-initdb.d
+    command: 
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: cloud-disk-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  minio:
+    image: minio/minio
+    container_name: cloud-disk-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_DEFAULT_BUCKETS: "cloud-disk"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # 应用服务（第二天添加）
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   container_name: cloud-disk-app
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - CLOUD_DISK_SERVER_ENV=development
+  #     - CLOUD_DISK_DB_HOST=mysql
+  #     - CLOUD_DISK_DB_PORT=3306
+  #     - CLOUD_DISK_DB_USERNAME=root
+  #     - CLOUD_DISK_DB_PASSWORD=rootpassword
+  #     - CLOUD_DISK_DB_NAME=cloud_disk
+  #     - CLOUD_DISK_REDIS_HOST=redis
+  #     - CLOUD_DISK_REDIS_PORT=6379
+  #   volumes:
+  #     - .:/app
+  #     - go_modules:/go/pkg/mod
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
+  go_modules:
+
+networks:
+  default:
+    name: cloud-disk-network
