@@ -2,15 +2,21 @@
 server:
   env: "development"
   port: 8080
-  host: "localhost"  # 改为 localhost 或 0.0.0.0
+  host: "localhost"  # 改为 localhost �?0.0.0.0
   read_timeout: 30
   write_timeout: 30
 
 database:
+  driver: "mysql"
   host: "localhost"
+  port: 3307  # 改为3307，与docker-compose.yml保持一�?
   username: "root"
-  password: "123456"
+  password: "rootpassword"
   database: "cloud_disk_dev"
+  charset: "utf8mb4"
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 3600
 
 redis:
   host: "localhost"

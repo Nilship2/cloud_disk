@@ -57,7 +57,6 @@ func initJSONLogger(config *config.LogConfig) (*zap.Logger, error) {
 	}
 
 	if config.Output == "file" && config.FilePath != "" {
-		// 文件输出
 		writer := getLogWriter(config.FilePath)
 		core := zapcore.NewCore(
 			zapcore.NewJSONEncoder(encoderConfig),
@@ -67,7 +66,6 @@ func initJSONLogger(config *config.LogConfig) (*zap.Logger, error) {
 		return zap.New(core, configs...), nil
 	}
 
-	// 控制台输出
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderConfig),
 		zapcore.AddSync(os.Stdout),
@@ -133,7 +131,7 @@ func getLogWriter(filePath string) zapcore.WriteSyncer {
 	return zapcore.AddSync(file)
 }
 
-// 便捷方法
+// 基础日志方法
 func Debug(msg string, fields ...zap.Field) {
 	if Logger != nil {
 		Logger.Debug(msg, fields...)
@@ -164,9 +162,22 @@ func Fatal(msg string, fields ...zap.Field) {
 	}
 }
 
+// 格式化日志方法
+func Debugf(format string, args ...interface{}) {
+	if Logger != nil {
+		Logger.Sugar().Debugf(format, args...)
+	}
+}
+
 func Infof(format string, args ...interface{}) {
 	if Logger != nil {
 		Logger.Sugar().Infof(format, args...)
+	}
+}
+
+func Warnf(format string, args ...interface{}) {
+	if Logger != nil {
+		Logger.Sugar().Warnf(format, args...)
 	}
 }
 
@@ -180,4 +191,44 @@ func Fatalf(format string, args ...interface{}) {
 	if Logger != nil {
 		Logger.Sugar().Fatalf(format, args...)
 	}
+}
+
+// 便捷方法：Any - 用于记录任意类型的值
+func Any(key string, value interface{}) zap.Field {
+	return zap.Any(key, value)
+}
+
+// 便捷方法：String
+func String(key string, value string) zap.Field {
+	return zap.String(key, value)
+}
+
+// 便捷方法：Int
+func Int(key string, value int) zap.Field {
+	return zap.Int(key, value)
+}
+
+// 便捷方法：Int64
+func Int64(key string, value int64) zap.Field {
+	return zap.Int64(key, value)
+}
+
+// 便捷方法：Uint
+func Uint(key string, value uint) zap.Field {
+	return zap.Uint(key, value)
+}
+
+// 便捷方法：Uint64
+func Uint64(key string, value uint64) zap.Field {
+	return zap.Uint64(key, value)
+}
+
+// 便捷方法：Bool
+func Bool(key string, value bool) zap.Field {
+	return zap.Bool(key, value)
+}
+
+// 便捷方法：Error
+func ErrorField(err error) zap.Field {
+	return zap.Error(err)
 }
