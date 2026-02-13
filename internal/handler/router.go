@@ -2,11 +2,15 @@
 package handler
 
 import (
+	"net/http"
+
 	"cloud-disk/internal/auth"
 	"cloud-disk/internal/config"
+	"cloud-disk/internal/dao"
 	"cloud-disk/internal/handler/middleware"
 	v1 "cloud-disk/internal/handler/v1"
 	"cloud-disk/internal/service/impl"
+	storageImpl "cloud-disk/pkg/storage" // 使用别名避免冲突
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -29,17 +33,40 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 
 	// 健康检查
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
 			"env":    cfg.Server.Env,
 		})
 	})
 
+	// 初始化DAO
+	userDAO := dao.NewUserDAO(db)
+	fileDAO := dao.NewFileDAO(db)
+
+	// 初始化存储
+	var storage storageImpl.Storage // 使用接口类型
+	if cfg.Storage.Type == "local" {
+		// 调用包级别的函数，而不是方法
+		storage = storageImpl.NewLocalStorage(
+			cfg.Storage.Local.BasePath,
+			cfg.Storage.Local.TempPath,
+			int64(cfg.Storage.Local.MaxSizeMB),
+		)
+	}
+	// TODO: 添加 MinIO 和 S3 支持
+
 	// 初始化服务
 	userService := impl.NewUserService(db, jwtManager)
+	fileService := impl.NewFileService(db, fileDAO, userDAO, storage)
 
 	// 初始化处理器
 	userHandler := v1.NewUserHandler(userService)
+	fileHandler := v1.NewFileHandler(fileService)
+
+	// 静态文件服务（本地存储）
+	if cfg.Storage.Type == "local" {
+		router.Static("/files", cfg.Storage.Local.BasePath)
+	}
 
 	// API v1 路由组
 	v1Group := router.Group("/api/v1")
@@ -57,6 +84,21 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 			authorized.PUT("/profile", userHandler.UpdateProfile)
 			authorized.POST("/change-password", userHandler.ChangePassword)
 			authorized.GET("/storage", userHandler.GetStorageInfo)
+
+			// 文件相关
+			authorized.POST("/files/upload", fileHandler.Upload)
+			authorized.POST("/files/instant", fileHandler.InstantUpload)
+			authorized.GET("/files", fileHandler.GetList)
+			authorized.GET("/files/check", fileHandler.CheckExists)
+			authorized.GET("/files/:id", fileHandler.GetDetail)
+			authorized.GET("/files/:id/download", fileHandler.Download)
+			authorized.DELETE("/files/:id", fileHandler.Delete)
+			authorized.DELETE("/files/batch", fileHandler.BatchDelete)
+			authorized.PUT("/files/:id/rename", fileHandler.Rename)
+			authorized.PUT("/files/:id/move", fileHandler.Move)
+
+			// 文件夹相关
+			authorized.POST("/folders", fileHandler.CreateFolder)
 		}
 	}
 

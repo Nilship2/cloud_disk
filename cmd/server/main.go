@@ -20,7 +20,7 @@ import (
 
 func main() {
 	// 1. 加载配置 - 使用 SQLite 配置
-	cfg, err := config.Load("config.sqlite.yaml")
+	cfg, err := config.Load("config.mysql.yaml")
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}

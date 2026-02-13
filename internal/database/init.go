@@ -90,6 +90,7 @@ func AutoMigrate(db *gorm.DB) error {
 
 	err := db.AutoMigrate(
 		&entity.User{},
+		&entity.File{},
 		// 后续添加其他实体
 	)
 

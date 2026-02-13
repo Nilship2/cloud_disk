@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
 -- 创建文件表
+-- 如果之前没有创建files表，现在添加
 CREATE TABLE IF NOT EXISTS `files` (
     `id` VARCHAR(36) NOT NULL COMMENT '文件ID（UUID）',
     `user_id` BIGINT UNSIGNED NOT NULL COMMENT '所属用户ID',
@@ -39,8 +40,7 @@ CREATE TABLE IF NOT EXISTS `files` (
     INDEX `idx_user_id` (`user_id`),
     INDEX `idx_parent_id` (`parent_id`),
     INDEX `idx_hash` (`hash`),
-    INDEX `idx_deleted_at` (`deleted_at`),
-    CONSTRAINT `fk_files_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    INDEX `idx_deleted_at` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文件表';
 
 -- 创建分享表
