@@ -91,7 +91,8 @@ func AutoMigrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 		&entity.User{},
 		&entity.File{},
-		// 后续添加其他实体
+		&entity.Share{},    // 新增
+		&entity.Favorite{}, // 新增
 	)
 
 	if err != nil {

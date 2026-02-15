@@ -10,7 +10,7 @@ import (
 	"cloud-disk/internal/handler/middleware"
 	v1 "cloud-disk/internal/handler/v1"
 	"cloud-disk/internal/service/impl"
-	storageImpl "cloud-disk/pkg/storage" // 使用别名避免冲突
+	storageImpl "cloud-disk/pkg/storage" // 使用别名
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -39,14 +39,20 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 		})
 	})
 
+	// 静态文件服务（本地存储）
+	if cfg.Storage.Type == "local" {
+		router.Static("/files", cfg.Storage.Local.BasePath)
+	}
+
 	// 初始化DAO
 	userDAO := dao.NewUserDAO(db)
 	fileDAO := dao.NewFileDAO(db)
+	shareDAO := dao.NewShareDAO(db)
+	favoriteDAO := dao.NewFavoriteDAO(db)
 
 	// 初始化存储
-	var storage storageImpl.Storage // 使用接口类型
+	var storage storageImpl.Storage
 	if cfg.Storage.Type == "local" {
-		// 调用包级别的函数，而不是方法
 		storage = storageImpl.NewLocalStorage(
 			cfg.Storage.Local.BasePath,
 			cfg.Storage.Local.TempPath,
@@ -58,15 +64,14 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 	// 初始化服务
 	userService := impl.NewUserService(db, jwtManager)
 	fileService := impl.NewFileService(db, fileDAO, userDAO, storage)
+	shareService := impl.NewShareService(db, shareDAO, fileDAO, userDAO, storage) // 现在 storage 已定义
+	favoriteService := impl.NewFavoriteService(db, favoriteDAO, fileDAO)
 
 	// 初始化处理器
 	userHandler := v1.NewUserHandler(userService)
 	fileHandler := v1.NewFileHandler(fileService)
-
-	// 静态文件服务（本地存储）
-	if cfg.Storage.Type == "local" {
-		router.Static("/files", cfg.Storage.Local.BasePath)
-	}
+	shareHandler := v1.NewShareHandler(shareService)
+	favoriteHandler := v1.NewFavoriteHandler(favoriteService)
 
 	// API v1 路由组
 	v1Group := router.Group("/api/v1")
@@ -74,6 +79,10 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 		// 公开路由
 		v1Group.POST("/register", userHandler.Register)
 		v1Group.POST("/login", userHandler.Login)
+
+		// 公开分享路由（不需要认证）
+		v1Group.GET("/s/:token", shareHandler.Access)
+		v1Group.GET("/s/:token/download", shareHandler.Download)
 
 		// 需要认证的路由组
 		authorized := v1Group.Group("/")
@@ -99,6 +108,19 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 
 			// 文件夹相关
 			authorized.POST("/folders", fileHandler.CreateFolder)
+
+			// 分享相关
+			authorized.POST("/shares", shareHandler.Create)
+			authorized.GET("/shares", shareHandler.GetList)
+			authorized.GET("/shares/:id", shareHandler.GetDetail)
+			authorized.PUT("/shares/:id", shareHandler.Update)
+			authorized.DELETE("/shares/:id", shareHandler.Cancel)
+
+			// 收藏相关
+			authorized.POST("/favorites", favoriteHandler.Add)
+			authorized.GET("/favorites", favoriteHandler.GetList)
+			authorized.GET("/favorites/check", favoriteHandler.Check)
+			authorized.DELETE("/favorites/:file_id", favoriteHandler.Remove)
 		}
 	}
 
