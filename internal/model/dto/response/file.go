@@ -29,14 +29,6 @@ type FileListResponse struct {
 	Files    []*FileResponse `json:"files"`
 }
 
-// TrashListResponse 回收站列表响应
-type TrashListResponse struct {
-	Total    int64           `json:"total"`
-	Page     int             `json:"page"`
-	PageSize int             `json:"page_size"`
-	Files    []*FileResponse `json:"files"`
-}
-
 // StorageInfoResponse 存储空间信息响应
 type StorageInfoResponse struct {
 	Capacity    int64   `json:"capacity"`

@@ -129,3 +129,9 @@ CREATE TABLE IF NOT EXISTS `favorites` (
     INDEX `idx_user_id` (`user_id`),
     INDEX `idx_file_id` (`file_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='收藏表';
+
+-- 为回收站查询添加索引
+CREATE INDEX IF NOT EXISTS idx_files_user_deleted ON files(user_id, deleted_at);
+
+-- 为分享过期查询添加索引
+CREATE INDEX IF NOT EXISTS idx_shares_expire ON shares(expire_time) WHERE status = 1;

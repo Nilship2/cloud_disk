@@ -2,15 +2,15 @@
 package handler
 
 import (
-	"net/http"
-
 	"cloud-disk/internal/auth"
 	"cloud-disk/internal/config"
 	"cloud-disk/internal/dao"
 	"cloud-disk/internal/handler/middleware"
 	v1 "cloud-disk/internal/handler/v1"
+	"cloud-disk/internal/monitor"
 	"cloud-disk/internal/service/impl"
-	storageImpl "cloud-disk/pkg/storage" // 使用别名
+	"cloud-disk/internal/task"
+	storageImpl "cloud-disk/pkg/storage"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -31,19 +31,6 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 	router.Use(middleware.RequestLogger())
 	router.Use(middleware.Recovery())
 
-	// 健康检查
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-			"env":    cfg.Server.Env,
-		})
-	})
-
-	// 静态文件服务（本地存储）
-	if cfg.Storage.Type == "local" {
-		router.Static("/files", cfg.Storage.Local.BasePath)
-	}
-
 	// 初始化DAO
 	userDAO := dao.NewUserDAO(db)
 	fileDAO := dao.NewFileDAO(db)
@@ -59,19 +46,36 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 			int64(cfg.Storage.Local.MaxSizeMB),
 		)
 	}
-	// TODO: 添加 MinIO 和 S3 支持
 
 	// 初始化服务
 	userService := impl.NewUserService(db, jwtManager)
 	fileService := impl.NewFileService(db, fileDAO, userDAO, storage)
-	shareService := impl.NewShareService(db, shareDAO, fileDAO, userDAO, storage) // 现在 storage 已定义
+	shareService := impl.NewShareService(db, shareDAO, fileDAO, userDAO, storage)
 	favoriteService := impl.NewFavoriteService(db, favoriteDAO, fileDAO)
+	trashService := impl.NewTrashService(db, fileDAO, userDAO, storage)
+
+	// 初始化监控
+	systemMonitor := monitor.NewSystemMonitor(db, userDAO, fileDAO, shareDAO)
+	monitorHandler := v1.NewMonitorHandler(systemMonitor)
+
+	// 初始化后台任务
+	cleanupTask := task.NewCleanupTask(db, shareDAO, fileDAO)
+	cleanupTask.Start() // 启动后台清理任务
 
 	// 初始化处理器
 	userHandler := v1.NewUserHandler(userService)
 	fileHandler := v1.NewFileHandler(fileService)
 	shareHandler := v1.NewShareHandler(shareService)
 	favoriteHandler := v1.NewFavoriteHandler(favoriteService)
+	trashHandler := v1.NewTrashHandler(trashService)
+
+	// 静态文件服务
+	if cfg.Storage.Type == "local" {
+		router.Static("/files", cfg.Storage.Local.BasePath)
+	}
+
+	// 健康检查
+	router.GET("/health", monitorHandler.Health)
 
 	// API v1 路由组
 	v1Group := router.Group("/api/v1")
@@ -80,7 +84,7 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 		v1Group.POST("/register", userHandler.Register)
 		v1Group.POST("/login", userHandler.Login)
 
-		// 公开分享路由（不需要认证）
+		// 公开分享路由
 		v1Group.GET("/s/:token", shareHandler.Access)
 		v1Group.GET("/s/:token/download", shareHandler.Download)
 
@@ -121,6 +125,19 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 			authorized.GET("/favorites", favoriteHandler.GetList)
 			authorized.GET("/favorites/check", favoriteHandler.Check)
 			authorized.DELETE("/favorites/:file_id", favoriteHandler.Remove)
+
+			// 回收站相关
+			authorized.GET("/trash", trashHandler.GetList)
+			authorized.GET("/trash/stats", trashHandler.GetStats)
+			authorized.POST("/trash/:id/restore", trashHandler.Restore)
+			authorized.POST("/trash/batch/restore", trashHandler.BatchRestore)
+			authorized.DELETE("/trash/:id", trashHandler.Delete)
+			authorized.DELETE("/trash/batch", trashHandler.BatchDelete)
+			authorized.POST("/trash/clean", trashHandler.CleanAll)
+
+			// 监控相关（管理员）
+			authorized.GET("/monitor/stats", monitorHandler.GetSystemStats)
+			authorized.GET("/monitor/db", monitorHandler.GetDBStats)
 		}
 	}
 

@@ -3,6 +3,7 @@ package dao
 
 import (
 	"errors"
+	"time"
 
 	"cloud-disk/internal/model/entity"
 
@@ -112,25 +113,6 @@ func (dao *FileDAO) BatchRestore(ids []string) error {
 	return dao.db.Model(&entity.File{}).Where("id IN (?)", ids).Update("deleted_at", nil).Error
 }
 
-// GetTrashList 获取回收站列表
-func (dao *FileDAO) GetTrashList(userID uint, page, pageSize int) ([]*entity.File, int64, error) {
-	var files []*entity.File
-	var total int64
-
-	db := dao.db.Model(&entity.File{}).Where("user_id = ? AND deleted_at IS NOT NULL", userID)
-
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	offset := (page - 1) * pageSize
-	if err := db.Order("deleted_at DESC").Offset(offset).Limit(pageSize).Find(&files).Error; err != nil {
-		return nil, 0, err
-	}
-
-	return files, total, nil
-}
-
 // CountByUserID 统计用户文件数量
 func (dao *FileDAO) CountByUserID(userID uint) (int64, error) {
 	var count int64
@@ -142,5 +124,95 @@ func (dao *FileDAO) CountByUserID(userID uint) (int64, error) {
 func (dao *FileDAO) SumSizeByUserID(userID uint) (int64, error) {
 	var sum int64
 	err := dao.db.Model(&entity.File{}).Where("user_id = ? AND deleted_at IS NULL", userID).Select("IFNULL(SUM(size), 0)").Scan(&sum).Error
+	return sum, err
+}
+
+// internal/dao/file_dao.go - 在现有FileDAO中添加以下方法
+
+// GetTrashList 获取回收站列表（已软删除的文件）
+func (dao *FileDAO) GetTrashList(userID uint, page, pageSize int) ([]*entity.File, int64, error) {
+	var files []*entity.File
+	var total int64
+
+	db := dao.db.Model(&entity.File{}).Where("user_id = ? AND deleted_at IS NOT NULL", userID)
+
+	// 获取总数
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 分页，按删除时间倒序
+	offset := (page - 1) * pageSize
+	if err := db.Order("deleted_at DESC").Offset(offset).Limit(pageSize).Find(&files).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return files, total, nil
+}
+
+// GetTrashItem 获取单个回收站项
+func (dao *FileDAO) GetTrashItem(userID uint, fileID string) (*entity.File, error) {
+	var file entity.File
+	err := dao.db.Unscoped().Where("id = ? AND user_id = ? AND deleted_at IS NOT NULL", fileID, userID).First(&file).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &file, err
+}
+
+// RestoreFromTrash 从回收站恢复
+func (dao *FileDAO) RestoreFromTrash(fileID string) error {
+	return dao.db.Model(&entity.File{}).Where("id = ?", fileID).Update("deleted_at", nil).Error
+}
+
+// BatchRestoreFromTrash 批量从回收站恢复
+func (dao *FileDAO) BatchRestoreFromTrash(fileIDs []string) error {
+	return dao.db.Model(&entity.File{}).Where("id IN (?)", fileIDs).Update("deleted_at", nil).Error
+}
+
+// PermanentlyDelete 彻底删除文件
+func (dao *FileDAO) PermanentlyDelete(fileID string) error {
+	return dao.db.Unscoped().Where("id = ?", fileID).Delete(&entity.File{}).Error
+}
+
+// BatchPermanentlyDelete 批量彻底删除
+func (dao *FileDAO) BatchPermanentlyDelete(fileIDs []string) error {
+	return dao.db.Unscoped().Where("id IN (?)", fileIDs).Delete(&entity.File{}).Error
+}
+
+// CleanExpiredTrash 清理过期回收站文件（超过30天）
+func (dao *FileDAO) CleanExpiredTrash() (int64, error) {
+	// 计算30天前的时间
+	expireTime := time.Now().AddDate(0, 0, -30)
+
+	// 获取要删除的文件列表（用于统计大小）
+	var files []*entity.File
+	if err := dao.db.Unscoped().Where("deleted_at < ?", expireTime).Find(&files).Error; err != nil {
+		return 0, err
+	}
+
+	// 计算总大小
+	var totalSize int64
+	for _, file := range files {
+		totalSize += file.Size
+	}
+
+	// 彻底删除
+	result := dao.db.Unscoped().Where("deleted_at < ?", expireTime).Delete(&entity.File{})
+
+	return totalSize, result.Error
+}
+
+// CountTrashByUser 统计用户回收站文件数量
+func (dao *FileDAO) CountTrashByUser(userID uint) (int64, error) {
+	var count int64
+	err := dao.db.Model(&entity.File{}).Where("user_id = ? AND deleted_at IS NOT NULL", userID).Count(&count).Error
+	return count, err
+}
+
+// SumTrashSizeByUser 统计用户回收站文件总大小
+func (dao *FileDAO) SumTrashSizeByUser(userID uint) (int64, error) {
+	var sum int64
+	err := dao.db.Model(&entity.File{}).Where("user_id = ? AND deleted_at IS NOT NULL", userID).Select("IFNULL(SUM(size), 0)").Scan(&sum).Error
 	return sum, err
 }
