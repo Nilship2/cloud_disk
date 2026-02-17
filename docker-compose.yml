@@ -5,12 +5,12 @@ services:
     image: mysql:8.0
     container_name: cloud-disk-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
       MYSQL_DATABASE: cloud_disk
       MYSQL_USER: cloud_user
-      MYSQL_PASSWORD: cloud_password
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-cloudpassword}
     ports:
-      - "3307:3306"  
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./scripts/database/migrations:/docker-entrypoint-initdb.d
@@ -18,78 +18,116 @@ services:
       --default-authentication-plugin=mysql_native_password
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
+      --max-allowed-packet=128M
+      --innodb-log-file-size=64M
+    networks:
+      - cloud-disk-network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: cloud-disk-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    networks:
+      - cloud-disk-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
 
   minio:
-    image: minio/minio
+    image: minio/minio:latest
     container_name: cloud-disk-minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-      MINIO_DEFAULT_BUCKETS: "cloud-disk"
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - minio_data:/data
+    networks:
+      - cloud-disk-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
+    restart: unless-stopped
 
-  # 应用服务（第二天添加�?
-  # app:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.dev
-  #   container_name: cloud-disk-app
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     - CLOUD_DISK_SERVER_ENV=development
-  #     - CLOUD_DISK_DB_HOST=mysql
-  #     - CLOUD_DISK_DB_PORT=3306
-  #     - CLOUD_DISK_DB_USERNAME=root
-  #     - CLOUD_DISK_DB_PASSWORD=rootpassword
-  #     - CLOUD_DISK_DB_NAME=cloud_disk
-  #     - CLOUD_DISK_REDIS_HOST=redis
-  #     - CLOUD_DISK_REDIS_PORT=6379
-  #   volumes:
-  #     - .:/app
-  #     - go_modules:/go/pkg/mod
-  #   depends_on:
-  #     mysql:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #     minio:
-  #       condition: service_healthy
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cloud-disk:latest
+    container_name: cloud-disk-app
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - DB_NAME=cloud_disk
+      - GO_ENV=production
+      #- DB_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redispassword}
+      - JWT_SECRET=${JWT_SECRET:-prod-secret-key-change-me}
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - app_storage:/app/storage
+      - ./config.yaml:/app/config.yaml
+      - ./config.dev.yaml:/app/config.dev.yaml
+    networks:
+      - cloud-disk-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: cloud-disk-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deployments/nginx/cloud-disk.conf:/etc/nginx/conf.d/default.conf
+      - ./storage/uploads:/var/www/files
+    depends_on:
+      - app
+    networks:
+      - cloud-disk-network
+    restart: unless-stopped
 
 volumes:
   mysql_data:
   redis_data:
   minio_data:
-  go_modules:
+  app_storage:
 
 networks:
-  default:
-    name: cloud-disk-network
+  cloud-disk-network:
+    driver: bridge

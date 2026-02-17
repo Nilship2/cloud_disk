@@ -1,43 +1,90 @@
-# Cloud Disk 云盘系统
+# ☁️ 云盘系统 - 仿百度网盘
 
-一个仿百度网盘的后端系统，支持文件存储、分享、收藏等功能。
+## 📋 项目简介
+一个完整的云存储系统，支持文件上传下载、分享、收藏、回收站等功能。
 
-## 功能特性
-- 用户注册登录（JWT认证）
-- 文件上传下载（支持本地/MinIO存储）
-- 文件分享（生成分享链接）
-- 文件收藏管理
-- 回收站功能
-- 存储空间管理
+## ✨ 功能特性
 
-## 技术栈
+### 👤 用户系统
+- 用户注册、登录
+- JWT身份认证
+- 个人信息管理
+- 密码加密存储
+- 存储空间配额管理
+
+### 📁 文件管理
+- 文件上传/下载
+- 文件夹创建
+- 文件重命名/移动
+- 文件秒传（基于哈希）
+- 文件列表分页/排序
+
+### 🔗 分享功能
+- 生成分享链接
+- 密码保护
+- 过期时间设置
+- 下载次数限制
+- 公开访问
+
+### ❤️ 收藏功能
+- 收藏文件
+- 收藏列表
+- 取消收藏
+
+### 🗑️ 回收站
+- 软删除
+- 恢复文件
+- 彻底删除
+- 批量操作
+- 自动清理（30天）
+
+### 📊 系统监控
+- 健康检查
+- 系统资源监控
+- 数据库连接池监控
+- 后台任务（清理过期数据）
+
+## 🛠️ 技术栈
+
+### 后端
 - **语言**: Go 1.21+
-- **框架**: Gin + GORM
-- **数据库**: MySQL 8.0 + Redis
-- **存储**: 本地/MinIO/S3
-- **部署**: Docker + Docker Compose
+- **框架**: Gin
+- **数据库**: MySQL 8.0
+- **缓存**: Redis
+- **ORM**: GORM
+- **认证**: JWT
+- **文档**: Swagger
 
-## 快速开始
+### 存储
+- **本地存储**: 开发环境
+- **对象存储**: MinIO (生产环境)
+- **兼容**: AWS S3
 
-### 环境要求
-- Go 1.21+
-- MySQL 8.0+
-- Redis 6.0+
-- (可选) MinIO
+### 部署
+- **容器化**: Docker
+- **编排**: Docker Compose
+- **反向代理**: Nginx
+- **CI/CD**: GitHub Actions (可选)
 
-### 安装
+## 🚀 快速开始
+
+### 开发环境
 ```bash
-# 克隆项目
+# 1. 克隆项目
 git clone <repository-url>
-
-# 进入目录
 cd cloud-disk
 
-# 安装依赖
+# 2. 安装依赖
 go mod download
 
-# 配置环境变量
-cp .env.example .env
+# 3. 启动基础设施
+docker-compose up -d mysql redis minio
 
-# 启动服务
-make run
+# 4. 创建数据库
+docker exec -i cloud-disk-mysql mysql -uroot -prootpassword -e "CREATE DATABASE IF NOT EXISTS cloud_disk_dev;"
+
+# 5. 启动服务
+go run cmd/server/main.go
+
+# 6. 访问API
+curl http://localhost:8080/health

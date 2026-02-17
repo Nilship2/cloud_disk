@@ -26,13 +26,14 @@ func NewTrashHandler(trashService interfaces.TrashService) *TrashHandler {
 
 // GetList 获取回收站列表
 // @Summary 获取回收站列表
+// @Description 获取已删除的文件列表
 // @Tags 回收站
 // @Security ApiKeyAuth
 // @Produce json
-// @Param page query int false "页码"
-// @Param page_size query int false "每页数量"
+// @Param page query int false "页码" default(1)
+// @Param page_size query int false "每页数量" default(20) maximum(100)
 // @Success 200 {object} response.Response{data=response.TrashListResponse} "成功"
-// @Router /api/v1/trash [get]
+// @Router /trash [get]
 func (h *TrashHandler) GetList(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
@@ -53,12 +54,14 @@ func (h *TrashHandler) GetList(c *gin.Context) {
 
 // Restore 恢复文件
 // @Summary 恢复文件
+// @Description 从回收站恢复文件
 // @Tags 回收站
 // @Security ApiKeyAuth
 // @Produce json
 // @Param id path string true "文件ID"
-// @Success 200 {object} response.Response "成功"
-// @Router /api/v1/trash/{id}/restore [post]
+// @Success 200 {object} response.Response "恢复成功"
+// @Failure 404 {object} response.ErrorResponse "文件不存在"
+// @Router /trash/{id}/restore [post]
 func (h *TrashHandler) Restore(c *gin.Context) {
 	userID := c.GetUint("user_id")
 	fileID := c.Param("id")

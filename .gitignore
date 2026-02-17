@@ -40,6 +40,9 @@ storage/uploads/temp/*
 !storage/uploads/temp/.gitkeep
 coverage.html
 coverage.txt
+.env
+.env.production
+.env.local
 
 # Logs
 *.log

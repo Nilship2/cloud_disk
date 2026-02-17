@@ -25,15 +25,18 @@ func NewFileHandler(fileService interfaces.FileService) *FileHandler {
 
 // Upload 上传文件
 // @Summary 上传文件
+// @Description 上传文件到指定目录
 // @Tags 文件管理
 // @Security ApiKeyAuth
 // @Accept multipart/form-data
 // @Produce json
 // @Param file formData file true "文件"
 // @Param parent_id formData string false "父目录ID"
-// @Success 200 {object} response.Response{data=entity.FileResponse} "成功"
+// @Success 201 {object} response.Response{data=response.FileResponse} "上传成功"
 // @Failure 400 {object} response.ErrorResponse "参数错误"
-// @Router /api/v1/files/upload [post]
+// @Failure 413 {object} response.ErrorResponse "文件太大"
+// @Failure 507 {object} response.ErrorResponse "存储空间不足"
+// @Router /files/upload [post]
 func (h *FileHandler) Upload(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
@@ -109,16 +112,18 @@ func (h *FileHandler) Download(c *gin.Context) {
 
 // GetList 获取文件列表
 // @Summary 获取文件列表
+// @Description 获取当前目录下的文件和文件夹列表
 // @Tags 文件管理
 // @Security ApiKeyAuth
 // @Produce json
 // @Param parent_id query string false "父目录ID"
-// @Param page query int false "页码"
-// @Param page_size query int false "每页数量"
-// @Param order_by query string false "排序字段"
-// @Param order query string false "排序方式"
+// @Param page query int false "页码" default(1)
+// @Param page_size query int false "每页数量" default(20) maximum(100)
+// @Param order_by query string false "排序字段" Enums(filename, size, created_at, updated_at)
+// @Param order query string false "排序方式" Enums(asc, desc)
 // @Success 200 {object} response.Response{data=response.FileListResponse} "成功"
-// @Router /api/v1/files [get]
+// @Failure 400 {object} response.ErrorResponse "参数错误"
+// @Router /files [get]
 func (h *FileHandler) GetList(c *gin.Context) {
 	userID := c.GetUint("user_id")
 

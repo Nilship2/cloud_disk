@@ -1,0 +1,1548 @@
+basePath: /api/v1
+definitions:
+  entity.FileResponse:
+    properties:
+      created_at:
+        type: string
+      extension:
+        type: string
+      filename:
+        type: string
+      id:
+        type: string
+      is_dir:
+        type: boolean
+      mime_type:
+        type: string
+      parent_id:
+        type: string
+      path:
+        type: string
+      size:
+        type: integer
+      size_text:
+        description: 格式化后的文件大小
+        type: string
+      updated_at:
+        type: string
+      url:
+        description: 访问URL
+        type: string
+    type: object
+  entity.UserResponse:
+    properties:
+      avatar:
+        type: string
+      bio:
+        type: string
+      capacity:
+        type: integer
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      used:
+        type: integer
+      username:
+        type: string
+    type: object
+  monitor.SystemStats:
+    properties:
+      cpu_usage:
+        description: CPU信息
+        type: number
+      disk_total:
+        description: 磁盘信息
+        type: integer
+      disk_usage:
+        description: 磁盘使用率
+        type: number
+      disk_used:
+        description: 磁盘已用空间
+        type: integer
+      file_count:
+        description: 文件总数
+        type: integer
+      go_version:
+        description: Go版本
+        type: string
+      memory_total:
+        description: 内存信息
+        type: integer
+      memory_usage:
+        description: 内存使用率
+        type: number
+      memory_used:
+        description: 已用内存
+        type: integer
+      num_goroutine:
+        description: Goroutine数量
+        type: integer
+      share_count:
+        description: 分享总数
+        type: integer
+      total_storage:
+        description: 总存储空间
+        type: integer
+      uptime:
+        description: 运行时间
+        type: string
+      used_storage:
+        description: 已用存储空间
+        type: integer
+      user_count:
+        description: 数据库统计
+        type: integer
+    type: object
+  request.ChangePasswordRequest:
+    properties:
+      confirm_password:
+        type: string
+      new_password:
+        maxLength: 32
+        minLength: 6
+        type: string
+      old_password:
+        type: string
+    required:
+    - confirm_password
+    - new_password
+    - old_password
+    type: object
+  request.FavoriteCreateRequest:
+    properties:
+      file_id:
+        type: string
+    required:
+    - file_id
+    type: object
+  request.FileBatchRequest:
+    properties:
+      file_ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - file_ids
+    type: object
+  request.FileCreateFolderRequest:
+    properties:
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      parent_id:
+        type: string
+    required:
+    - name
+    type: object
+  request.FileInstantUploadRequest:
+    properties:
+      filename:
+        type: string
+      hash:
+        type: string
+      parent_id:
+        type: string
+    required:
+    - filename
+    - hash
+    type: object
+  request.FileMoveRequest:
+    properties:
+      target_parent_id:
+        type: string
+    required:
+    - target_parent_id
+    type: object
+  request.FileRenameRequest:
+    properties:
+      new_name:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - new_name
+    type: object
+  request.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  request.RegisterRequest:
+    properties:
+      confirm_password:
+        type: string
+      email:
+        type: string
+      password:
+        maxLength: 32
+        minLength: 6
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - confirm_password
+    - email
+    - password
+    - username
+    type: object
+  request.ShareCreateRequest:
+    properties:
+      expire_days:
+        description: 过期天数
+        maximum: 30
+        minimum: 1
+        type: integer
+      file_id:
+        type: string
+      max_downloads:
+        description: 最大下载次数
+        maximum: 1000
+        minimum: 1
+        type: integer
+      password:
+        description: 访问密码
+        maxLength: 20
+        minLength: 4
+        type: string
+    required:
+    - file_id
+    type: object
+  request.ShareUpdateRequest:
+    properties:
+      expire_days:
+        maximum: 30
+        minimum: 1
+        type: integer
+      max_downloads:
+        maximum: 1000
+        minimum: 1
+        type: integer
+      password:
+        maxLength: 20
+        minLength: 4
+        type: string
+      status:
+        enum:
+        - 1
+        - 2
+        type: integer
+    type: object
+  request.TrashBatchRequest:
+    properties:
+      file_ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - file_ids
+    type: object
+  request.UpdateProfileRequest:
+    properties:
+      avatar:
+        type: string
+      bio:
+        maxLength: 500
+        type: string
+    type: object
+  response.ErrorDetail:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      errors:
+        items:
+          $ref: '#/definitions/response.ErrorDetail'
+        type: array
+      message:
+        type: string
+    type: object
+  response.FavoriteListResponse:
+    properties:
+      favorites:
+        items:
+          $ref: '#/definitions/response.FavoriteResponse'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  response.FavoriteResponse:
+    properties:
+      created_at:
+        type: string
+      file:
+        $ref: '#/definitions/response.FileResponse'
+      id:
+        type: integer
+    type: object
+  response.FileListResponse:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/response.FileResponse'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  response.FileResponse:
+    properties:
+      created_at:
+        type: string
+      extension:
+        type: string
+      filename:
+        type: string
+      id:
+        type: string
+      is_dir:
+        type: boolean
+      mime_type:
+        type: string
+      parent_id:
+        type: string
+      path:
+        type: string
+      size:
+        type: integer
+      size_text:
+        type: string
+      updated_at:
+        type: string
+      url:
+        type: string
+    type: object
+  response.LoginResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/response.UserInfo'
+    type: object
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  response.ShareDetailResponse:
+    properties:
+      created_at:
+        type: string
+      download_left:
+        type: integer
+      expire_time:
+        type: string
+      file:
+        $ref: '#/definitions/response.FileResponse'
+      need_password:
+        type: boolean
+      token:
+        type: string
+    type: object
+  response.ShareListResponse:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      shares:
+        items:
+          $ref: '#/definitions/response.ShareResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  response.ShareResponse:
+    properties:
+      created_at:
+        type: string
+      download_count:
+        type: integer
+      expire_time:
+        type: string
+      file_id:
+        type: string
+      file_size:
+        type: integer
+      file_size_text:
+        type: string
+      filename:
+        type: string
+      id:
+        type: integer
+      max_downloads:
+        type: integer
+      share_link:
+        type: string
+      status:
+        type: integer
+      token:
+        type: string
+    type: object
+  response.StorageInfo:
+    properties:
+      available:
+        type: integer
+      capacity:
+        type: integer
+      file_count:
+        type: integer
+      folder_count:
+        type: integer
+      usage_rate:
+        type: number
+      used:
+        type: integer
+    type: object
+  response.TrashCleanResponse:
+    properties:
+      cleaned_count:
+        description: 清理的文件数
+        type: integer
+      freed_space:
+        description: 释放的空间
+        type: integer
+      freed_space_text:
+        type: string
+    type: object
+  response.TrashItemResponse:
+    properties:
+      deleted_at:
+        type: string
+      expire_in:
+        description: 剩余过期天数（默认30天后永久删除）
+        type: integer
+      extension:
+        type: string
+      filename:
+        type: string
+      id:
+        type: string
+      is_dir:
+        type: boolean
+      mime_type:
+        type: string
+      size:
+        type: integer
+      size_text:
+        type: string
+    type: object
+  response.TrashListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/response.TrashItemResponse'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  response.UserInfo:
+    properties:
+      avatar:
+        type: string
+      bio:
+        type: string
+      capacity:
+        type: integer
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      used:
+        type: integer
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: 仿百度网盘的后端系统，支持文件存储、分享、收藏等功能
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: 云盘系统 API
+  version: "1.0"
+paths:
+  /api/v1/change-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 密码信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 修改密码
+      tags:
+      - 用户管理
+  /api/v1/favorites:
+    get:
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.FavoriteListResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取收藏列表
+      tags:
+      - 收藏管理
+  /api/v1/favorites/{file_id}:
+    delete:
+      parameters:
+      - description: 文件ID
+        in: path
+        name: file_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 取消收藏
+      tags:
+      - 收藏管理
+  /api/v1/favorites/check:
+    get:
+      parameters:
+      - description: 文件ID
+        in: query
+        name: file_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 检查是否已收藏
+      tags:
+      - 收藏管理
+  /api/v1/files/{id}:
+    delete:
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除文件
+      tags:
+      - 文件管理
+    get:
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.FileResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取文件详情
+      tags:
+      - 文件管理
+  /api/v1/files/{id}/download:
+    get:
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 文件
+          schema:
+            type: file
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 下载文件
+      tags:
+      - 文件管理
+  /api/v1/files/{id}/move:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 目标目录
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.FileMoveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 移动文件
+      tags:
+      - 文件管理
+  /api/v1/files/{id}/rename:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 新名称
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.FileRenameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 重命名文件
+      tags:
+      - 文件管理
+  /api/v1/files/batch:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: 文件ID列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.FileBatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 批量删除文件
+      tags:
+      - 文件管理
+  /api/v1/files/check:
+    get:
+      parameters:
+      - description: 文件哈希
+        in: query
+        name: hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.FileResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 检查文件是否存在
+      tags:
+      - 文件管理
+  /api/v1/files/instant:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 秒传信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.FileInstantUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.FileResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 秒传文件
+      tags:
+      - 文件管理
+  /api/v1/folders:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 文件夹信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.FileCreateFolderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.FileResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建文件夹
+      tags:
+      - 文件管理
+  /api/v1/monitor/db:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取数据库统计
+      tags:
+      - 监控
+  /api/v1/monitor/stats:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/monitor.SystemStats'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取系统统计信息
+      tags:
+      - 监控
+  /api/v1/profile:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 个人信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新个人信息
+      tags:
+      - 用户管理
+  /api/v1/shares:
+    get:
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: page_size
+        type: integer
+      - description: 状态
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.ShareListResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取分享列表
+      tags:
+      - 分享管理
+  /api/v1/shares/{id}:
+    delete:
+      parameters:
+      - description: 分享ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 取消分享
+      tags:
+      - 分享管理
+    get:
+      parameters:
+      - description: 分享ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.ShareResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取分享详情
+      tags:
+      - 分享管理
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 分享ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ShareUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新分享
+      tags:
+      - 分享管理
+  /api/v1/storage:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.StorageInfo'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取存储空间信息
+      tags:
+      - 用户管理
+  /api/v1/trash/{id}:
+    delete:
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 彻底删除
+      tags:
+      - 回收站
+  /api/v1/trash/batch:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: 文件ID列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.TrashBatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 批量彻底删除
+      tags:
+      - 回收站
+  /api/v1/trash/batch/restore:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 文件ID列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.TrashBatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: 批量恢复
+      tags:
+      - 回收站
+  /api/v1/trash/clean:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TrashCleanResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 清空回收站
+      tags:
+      - 回收站
+  /api/v1/trash/stats:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取回收站统计
+      tags:
+      - 回收站
+  /favorites:
+    post:
+      consumes:
+      - application/json
+      description: 收藏文件
+      parameters:
+      - description: 收藏信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.FavoriteCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 收藏成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.FavoriteResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: 文件不存在
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: 已收藏
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 添加收藏
+      tags:
+      - 收藏管理
+  /files:
+    get:
+      description: 获取当前目录下的文件和文件夹列表
+      parameters:
+      - description: 父目录ID
+        in: query
+        name: parent_id
+        type: string
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: 每页数量
+        in: query
+        maximum: 100
+        name: page_size
+        type: integer
+      - description: 排序字段
+        enum:
+        - filename
+        - size
+        - created_at
+        - updated_at
+        in: query
+        name: order_by
+        type: string
+      - description: 排序方式
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.FileListResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取文件列表
+      tags:
+      - 文件管理
+  /files/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传文件到指定目录
+      parameters:
+      - description: 文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 父目录ID
+        in: formData
+        name: parent_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 上传成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.FileResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "413":
+          description: 文件太大
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "507":
+          description: 存储空间不足
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 上传文件
+      tags:
+      - 文件管理
+  /health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 健康状态
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 健康检查
+      tags:
+      - 监控
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录，返回JWT令牌
+      parameters:
+      - description: 登录信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.LoginResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: 密码错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: 用户不存在
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: 用户登录
+      tags:
+      - 用户管理
+  /profile:
+    get:
+      description: 获取当前登录用户的详细信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.UserResponse'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取当前用户信息
+      tags:
+      - 用户管理
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: 注册新用户，用户名唯一，邮箱唯一
+      parameters:
+      - description: 注册信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 注册成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.UserResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: 用户已存在
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: 用户注册
+      tags:
+      - 用户管理
+  /s/{token}:
+    get:
+      description: 通过token访问分享的文件信息
+      parameters:
+      - description: 分享令牌
+        in: path
+        name: token
+        required: true
+        type: string
+      - description: 访问密码
+        in: query
+        name: password
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.ShareDetailResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: 密码错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: 分享不存在
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: 访问分享
+      tags:
+      - 分享管理
+  /s/{token}/download:
+    get:
+      parameters:
+      - description: 分享令牌
+        in: path
+        name: token
+        required: true
+        type: string
+      - description: 访问密码
+        in: query
+        name: password
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "302":
+          description: 重定向到文件
+          schema:
+            type: string
+      summary: 下载分享文件
+      tags:
+      - 分享管理
+  /shares:
+    post:
+      consumes:
+      - application/json
+      description: 创建文件分享链接
+      parameters:
+      - description: 分享信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ShareCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.ShareResponse'
+              type: object
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: 文件不存在
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建分享
+      tags:
+      - 分享管理
+  /trash:
+    get:
+      description: 获取已删除的文件列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: 每页数量
+        in: query
+        maximum: 100
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.TrashListResponse'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取回收站列表
+      tags:
+      - 回收站
+  /trash/{id}/restore:
+    post:
+      description: 从回收站恢复文件
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 恢复成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 文件不存在
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: 恢复文件
+      tags:
+      - 回收站
+schemes:
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

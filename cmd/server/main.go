@@ -18,9 +18,33 @@ import (
 	"cloud-disk/pkg/logger"
 )
 
+// @title 云盘系统 API
+// @version 1.0
+// @description 仿百度网盘的后端系统，支持文件存储、分享、收藏等功能
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
 func main() {
-	// 1. 加载配置 - 使用 SQLite 配置
-	cfg, err := config.Load("config.mysql.yaml")
+	// 1. 根据环境变量决定配置文件
+	configFile := "config.dev.yaml" // 默认开发配置
+	if env := os.Getenv("GO_ENV"); env == "production" {
+		configFile = "config.yaml" // 生产环境使用 config.yaml
+	}
+	cfg, err := config.Load(configFile)
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}

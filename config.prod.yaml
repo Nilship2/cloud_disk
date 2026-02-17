@@ -9,9 +9,9 @@ server:
 database:
   driver: "mysql"
   host: "mysql"  # Docker服务名
-  port: 3306
+  port: 3306     # 容器内端口
   username: "root"
-  password: "${DB_PASSWORD}"  # 从环境变量读取
+  password: "${MYSQL_ROOT_PASSWORD}"
   database: "cloud_disk"
   charset: "utf8mb4"
   max_idle_conns: 10

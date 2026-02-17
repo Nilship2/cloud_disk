@@ -27,13 +27,16 @@ func NewShareHandler(shareService interfaces.ShareService) *ShareHandler {
 
 // Create 创建分享
 // @Summary 创建分享
+// @Description 创建文件分享链接
 // @Tags 分享管理
 // @Security ApiKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body request.ShareCreateRequest true "分享信息"
-// @Success 200 {object} response.Response{data=response.ShareResponse} "成功"
-// @Router /api/v1/shares [post]
+// @Success 201 {object} response.Response{data=response.ShareResponse} "创建成功"
+// @Failure 400 {object} response.ErrorResponse "参数错误"
+// @Failure 404 {object} response.ErrorResponse "文件不存在"
+// @Router /shares [post]
 func (h *ShareHandler) Create(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
@@ -164,13 +167,17 @@ func (h *ShareHandler) GetList(c *gin.Context) {
 	response.Success(c, list)
 }
 
-// Access 访问分享（公开接口）
+// Access 访问分享
 // @Summary 访问分享
+// @Description 通过token访问分享的文件信息
 // @Tags 分享管理
 // @Produce json
 // @Param token path string true "分享令牌"
 // @Param password query string false "访问密码"
 // @Success 200 {object} response.Response{data=response.ShareDetailResponse} "成功"
+// @Failure 400 {object} response.ErrorResponse "参数错误"
+// @Failure 403 {object} response.ErrorResponse "密码错误"
+// @Failure 404 {object} response.ErrorResponse "分享不存在"
 // @Router /s/{token} [get]
 func (h *ShareHandler) Access(c *gin.Context) {
 	token := c.Param("token")

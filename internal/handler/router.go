@@ -14,6 +14,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+
+	// Swagger相关导入
+	_ "cloud-disk/docs" // 导入生成的docs
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gin.Engine {
@@ -30,6 +36,11 @@ func NewRouter(cfg *config.Config, db *gorm.DB, jwtManager *auth.JWTManager) *gi
 	router.Use(middleware.CORS())
 	router.Use(middleware.RequestLogger())
 	router.Use(middleware.Recovery())
+
+	// Swagger文档（仅在非生产环境）
+	if cfg.Server.Env != "production" {
+		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	// 初始化DAO
 	userDAO := dao.NewUserDAO(db)

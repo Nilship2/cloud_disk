@@ -25,13 +25,17 @@ func NewFavoriteHandler(favoriteService interfaces.FavoriteService) *FavoriteHan
 
 // Add 添加收藏
 // @Summary 添加收藏
+// @Description 收藏文件
 // @Tags 收藏管理
 // @Security ApiKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body request.FavoriteCreateRequest true "收藏信息"
-// @Success 200 {object} response.Response{data=response.FavoriteResponse} "成功"
-// @Router /api/v1/favorites [post]
+// @Success 201 {object} response.Response{data=response.FavoriteResponse} "收藏成功"
+// @Failure 400 {object} response.ErrorResponse "参数错误"
+// @Failure 404 {object} response.ErrorResponse "文件不存在"
+// @Failure 409 {object} response.ErrorResponse "已收藏"
+// @Router /favorites [post]
 func (h *FavoriteHandler) Add(c *gin.Context) {
 	userID := c.GetUint("user_id")
 

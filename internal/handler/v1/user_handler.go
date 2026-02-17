@@ -37,13 +37,15 @@ func NewUserHandler(userService interfaces.UserService) *UserHandler {
 
 // Register 用户注册
 // @Summary 用户注册
+// @Description 注册新用户，用户名唯一，邮箱唯一
 // @Tags 用户管理
 // @Accept json
 // @Produce json
 // @Param request body request.RegisterRequest true "注册信息"
-// @Success 200 {object} response.Response{data=entity.UserResponse} "成功"
+// @Success 200 {object} response.Response{data=entity.UserResponse} "注册成功"
 // @Failure 400 {object} response.ErrorResponse "参数错误"
-// @Router /api/v1/register [post]
+// @Failure 409 {object} response.ErrorResponse "用户已存在"
+// @Router /register [post]
 func (h *UserHandler) Register(c *gin.Context) {
 	var req request.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -68,13 +70,16 @@ func (h *UserHandler) Register(c *gin.Context) {
 
 // Login 用户登录
 // @Summary 用户登录
+// @Description 用户登录，返回JWT令牌
 // @Tags 用户管理
 // @Accept json
 // @Produce json
 // @Param request body request.LoginRequest true "登录信息"
-// @Success 200 {object} response.Response{data=response.LoginResponse} "成功"
+// @Success 200 {object} response.Response{data=response.LoginResponse} "登录成功"
 // @Failure 400 {object} response.ErrorResponse "参数错误"
-// @Router /api/v1/login [post]
+// @Failure 401 {object} response.ErrorResponse "密码错误"
+// @Failure 404 {object} response.ErrorResponse "用户不存在"
+// @Router /login [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	var req request.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -99,12 +104,13 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 // GetProfile 获取当前用户信息
 // @Summary 获取当前用户信息
+// @Description 获取当前登录用户的详细信息
 // @Tags 用户管理
 // @Security ApiKeyAuth
 // @Produce json
 // @Success 200 {object} response.Response{data=entity.UserResponse} "成功"
 // @Failure 401 {object} response.ErrorResponse "未授权"
-// @Router /api/v1/profile [get]
+// @Router /profile [get]
 func (h *UserHandler) GetProfile(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
