@@ -1,6 +1,5 @@
-# config.prod.yaml
 server:
-  env: "production"
+  env: "production"  # 改为 production
   port: 8080
   host: "0.0.0.0"
   read_timeout: 30
@@ -8,41 +7,29 @@ server:
 
 database:
   driver: "mysql"
-  host: "mysql"  # Docker服务名
-  port: 3306
+  host: "localhost"
+  port: 3306  # 改为 3306
   username: "root"
-  password: "${DB_PASSWORD}"  # 从环境变量读取
+  password: "123456"
   database: "cloud_disk"
   charset: "utf8mb4"
   max_idle_conns: 10
   max_open_conns: 100
   conn_max_lifetime: 3600
 
-redis:
-  host: "redis"
-  port: 6379
-  password: "${REDIS_PASSWORD}"
-  db: 0
-  pool_size: 20
-
 jwt:
-  secret: "${JWT_SECRET}"
+  secret: "your-secret-key-change-in-production"
   expires_hours: 24
 
 log:
   level: "info"
   format: "json"
-  output: "stdout"
+  output: "file"
+  file_path: "C:/cloud-disk/logs/app.log"
 
 storage:
-  type: "minio"  # 生产环境使用MinIO
-  minio:
-    endpoint: "minio:9000"
-    access_key: "${MINIO_ACCESS_KEY}"
-    secret_key: "${MINIO_SECRET_KEY}"
-    use_ssl: false
-    bucket_name: "cloud-disk"
+  type: "local"
   local:
-    base_path: "./storage/uploads"
-    temp_path: "./storage/uploads/temp"
+    base_path: "C:/cloud-disk/storage/uploads"
+    temp_path: "C:/cloud-disk/storage/uploads/temp"
     max_size_mb: 100

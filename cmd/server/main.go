@@ -39,15 +39,18 @@ import (
 // @name Authorization
 
 func main() {
-	// 1. 根据环境变量决定配置文件
-	configFile := "config.dev.yaml" // 默认开发配置
-	if env := os.Getenv("GO_ENV"); env == "production" {
-		configFile = "config.yaml" // 生产环境使用 config.yaml
-	}
-	cfg, err := config.Load(configFile)
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
+	// 直接指定使用生产配置文件
+    cfg, err := config.Load("config.prod.yaml")
+    if err != nil {
+        log.Fatalf("Failed to load configuration: %v", err)
+    }
+    
+    // 强制覆盖数据库配置（确保使用正确的端口）
+    cfg.Database.Host = "localhost"
+    cfg.Database.Port = 3306
+    cfg.Database.Username = "root"
+    cfg.Database.Password = "123456"
+    cfg.Database.Database = "cloud_disk"
 
 	// 2. 初始化日志
 	if err := logger.Init(&cfg.Log); err != nil {

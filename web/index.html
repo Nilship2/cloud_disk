@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的云盘 · 全能版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            background: linear-gradient(145deg, #f6f9fc 0%, #edf2f9 100%);
+            height: 600xp;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1300px;
+            width: 100%;
+            max-height: 1300px;
+            height: 100%;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 36px;
+            box-shadow: 0 20px 40px rgba(0,20,50,0.15);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* 头部导航 */
+        .header {
+            background: rgba(255,255,255,0.8);
+            padding: 20px 32px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo h1 {
+            font-size: 26px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 主导航菜单 */
+        .main-nav {
+            display: flex;
+            gap: 12px;
+            background: rgba(255,255,255,0.6);
+            padding: 6px;
+            border-radius: 40px;
+        }
+        .nav-item {
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+            color: #3a4e6b;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .nav-item.active {
+            background: #1e3c72;
+            color: white;
+            box-shadow: 0 4px 12px rgba(30,60,114,0.2);
+        }
+        .nav-item:hover:not(.active) {
+            background: #e3eaf3;
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 6px 16px 6px 12px;
+            border-radius: 40px;
+        }
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(145deg, #4f6d9a, #2b4a78);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #8899bb;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 30px;
+        }
+        .logout-btn:hover {
+            background: #eef2f6;
+            color: #d32f2f;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-outline, .btn-primary {
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 500;
+            border: 1.5px solid transparent;
+            cursor: pointer;
+        }
+        .btn-outline {
+            background: white;
+            border-color: #cbd5e1;
+            color: #334155;
+        }
+        .btn-primary {
+            background: #1e3c72;
+            color: white;
+        }
+
+        /* 存储卡片 */
+        .storage-card {
+            background: white;
+            margin: 24px 32px;
+            padding: 20px 28px;
+            border-radius: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .storage-info h3 {
+            font-size: 15px;
+            color: #62748c;
+            margin-bottom: 6px;
+        }
+        .storage-progress {
+            width: 280px;
+            height: 10px;
+            background: #e3e9f2;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2a5c9a, #3b7bc9);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .upload-btn {
+            background: #2a5c9a;
+            border: none;
+            color: white;
+            padding: 12px 32px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 工具栏 */
+        .toolbar {
+            padding: 8px 32px 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .path-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.6);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 14px;
+        }
+        .path-item {
+            color: #2a5298;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .create-folder-btn {
+            background: white;
+            border: 1px solid #dde3ed;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* 标签页内容容器 */
+        .tab-content {
+            min-height: 400px;
+        }
+
+        /* 文件网格 */
+        .file-grid {
+            padding: 12px 32px 32px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        .file-item {
+            background: white;
+            border-radius: 24px;
+            padding: 20px 12px 14px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.02);
+            cursor: pointer;
+            position: relative;
+            transition: 0.2s;
+        }
+        .file-item:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 30px rgba(20,40,70,0.12);
+        }
+        .file-icon { font-size: 48px; margin-bottom: 10px; }
+        .file-name {
+            font-weight: 500;
+            font-size: 14px;
+            color: #1e293b;
+            word-break: break-word;
+        }
+        .file-meta { font-size: 11px; color: #7e8aa8; }
+        .file-checkbox {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            width: 18px;
+            height: 18px;
+            accent-color: #2a5c9a;
+            cursor: pointer;
+        }
+
+        /* 批量操作栏 */
+        .batch-bar {
+            background: white;
+            margin: 0 32px 28px;
+            padding: 14px 24px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .batch-actions { display: flex; gap: 16px; }
+        .batch-btn {
+            background: none;
+            border: none;
+            color: #49658c;
+            font-weight: 500;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        .batch-btn.danger { color: #c62828; }
+
+        /* 分享列表 */
+        .share-list {
+            padding: 20px 32px;
+        }
+        .share-item {
+            background: white;
+            padding: 16px 24px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .share-info { display: flex; align-items: center; gap: 20px; }
+        .share-link {
+            background: #f0f5fd;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            color: #2a5298;
+        }
+        .copy-btn {
+            background: none;
+            border: 1px solid #cbd5e1;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        /* 收藏列表 */
+        .favorite-list {
+            padding: 20px 32px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        /* 回收站列表 */
+        .trash-list {
+            padding: 20px 32px;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,10,20,0.5);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 40px;
+            width: 380px;
+            padding: 32px 28px;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 16px 18px;
+            border: 1px solid #dce3ec;
+            border-radius: 30px;
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+        .modal-btn-primary { background: #1e3c72; color: white; }
+        .modal-btn-secondary { background: #eef3fa; color: #2d3f5e; }
+    </style>
+</head>
+<body>
+<div class="app-container" id="app">
+
+    <!-- 头部 -->
+    <div class="header">
+        <div class="logo"><h1>☁️ 我的云盘</h1></div>
+        <div class="main-nav" id="mainNav">
+            <div class="nav-item active" data-tab="files">📁 我的文件</div>
+            <div class="nav-item" data-tab="shares">🔗 我的分享</div>
+            <div class="nav-item" data-tab="favorites">❤️ 我的收藏</div>
+            <div class="nav-item" data-tab="trash">🗑️ 回收站</div>
+        </div>
+        <div class="user-area" id="userArea">
+            <div class="user-info" id="userInfo" style="display: none;">
+                <span class="avatar" id="userAvatar">U</span>
+                <span class="username" id="userName">加载中...</span>
+                <button class="logout-btn" id="logoutBtn">退出</button>
+            </div>
+            <div class="auth-buttons" id="authButtons">
+                <button class="btn-outline" id="showLoginBtn">登录</button>
+                <button class="btn-primary" id="showRegisterBtn">注册</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 动态内容区域 -->
+    <div id="contentArea"></div>
+
+    <!-- 批量操作栏（只在文件标签页显示） -->
+    <div class="batch-bar" id="batchBar" style="display: none;">
+        <span id="selectedCount">已选择 0 项</span>
+        <div class="batch-actions">
+            <button class="batch-btn" id="batchShareBtn">🔗 分享</button>
+            <button class="batch-btn" id="batchFavoriteBtn">❤️ 收藏</button>
+            <button class="batch-btn danger" id="batchDeleteBtn">🗑️ 删除</button>
+        </div>
+    </div>
+
+    <!-- 登录模态框 -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <h2>登录</h2>
+            <input type="text" placeholder="用户名" id="loginUsername">
+            <input type="password" placeholder="密码" id="loginPassword">
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" onclick="closeModal('loginModal')">取消</button>
+                <button class="modal-btn-primary" id="loginBtn">登录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <h2>注册</h2>
+            <input type="text" placeholder="用户名" id="regUsername">
+            <input type="email" placeholder="邮箱" id="regEmail">
+            <input type="password" placeholder="密码" id="regPassword">
+            <input type="password" placeholder="确认密码" id="regConfirm">
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" onclick="closeModal('registerModal')">取消</button>
+                <button class="modal-btn-primary" id="registerBtn">注册</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建分享模态框 -->
+    <div class="modal" id="shareModal">
+        <div class="modal-content">
+            <h2>创建分享</h2>
+            <input type="password" placeholder="访问密码（可选）" id="sharePassword">
+            <input type="number" placeholder="过期天数（默认7天）" id="shareExpireDays" value="7">
+            <input type="number" placeholder="最大下载次数（0无限制）" id="shareMaxDownloads" value="0">
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" onclick="closeModal('shareModal')">取消</button>
+                <button class="modal-btn-primary" id="createShareBtn">创建分享</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建文件夹模态框 -->
+    <div class="modal" id="folderModal">
+        <div class="modal-content">
+            <h2>新建文件夹</h2>
+            <input type="text" placeholder="文件夹名称" id="folderName">
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" onclick="closeModal('folderModal')">取消</button>
+                <button class="modal-btn-primary" id="createFolderBtn">创建</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = '';
+    let TOKEN = localStorage.getItem('token') || null;
+    let currentUser = null;
+    let currentTab = 'files';
+    let currentParentId = '';
+    let selectedItems = new Set();
+
+    // DOM 元素
+    const contentArea = document.getElementById('contentArea');
+    const userInfo = document.getElementById('userInfo');
+    const authButtons = document.getElementById('authButtons');
+    const mainNav = document.getElementById('mainNav');
+    const batchBar = document.getElementById('batchBar');
+
+    // 初始化
+    if (TOKEN) {
+        fetchUserProfile();
+    } else {
+        showLoggedOutUI();
+        loadTabContent('files');
+    }
+
+    // 导航点击
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            item.classList.add('active');
+            currentTab = item.dataset.tab;
+            currentParentId = '';
+            selectedItems.clear();
+            batchBar.style.display = 'none';
+            loadTabContent(currentTab);
+        });
+    });
+
+    // ================== API 调用 ==================
+    async function apiCall(endpoint, options = {}) {
+        const url = API_BASE + '/api/v1' + endpoint;
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+        };
+        if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+        const response = await fetch(url, { ...options, headers });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || '请求失败');
+        return data;
+    }
+
+    // ================== 用户认证 ==================
+    async function fetchUserProfile() {
+        try {
+            const res = await apiCall('/profile');
+            currentUser = res.data;
+            showLoggedInUI();
+            loadTabContent(currentTab);
+            fetchStorageInfo();
+        } catch (e) {
+            showLoggedOutUI();
+        }
+    }
+
+    function showLoggedInUI() {
+        userInfo.style.display = 'flex';
+        authButtons.style.display = 'none';
+        document.getElementById('userName').textContent = currentUser?.username || '用户';
+        document.getElementById('userAvatar').textContent = (currentUser?.username || 'U').charAt(0).toUpperCase();
+    }
+
+    function showLoggedOutUI() {
+        userInfo.style.display = 'none';
+        authButtons.style.display = 'flex';
+        TOKEN = null;
+        currentUser = null;
+        localStorage.removeItem('token');
+    }
+
+    // ================== 标签页内容加载 ==================
+    async function loadTabContent(tab) {
+        switch(tab) {
+            case 'files': renderFilesTab(); break;
+            case 'shares': renderSharesTab(); break;
+            case 'favorites': renderFavoritesTab(); break;
+            case 'trash': renderTrashTab(); break;
+        }
+    }
+
+    // ================== 文件标签页 ==================
+    async function renderFilesTab() {
+        if (!TOKEN) {
+            contentArea.innerHTML = '<div style="text-align:center;padding:60px">请先登录</div>';
+            return;
+        }
+
+        // 获取存储信息
+        await fetchStorageInfo();
+
+        // 获取文件列表
+        let files = [];
+        try {
+            const url = currentParentId ? `/files?parent_id=${currentParentId}` : '/files';
+            const res = await apiCall(url);
+            files = res.data.files || [];
+        } catch (e) {
+            console.error('获取文件列表失败', e);
+        }
+
+        // 生成面包屑导航
+        let pathHtml = '<span class="path-item" data-path="">全部文件</span>';
+        if (currentParentId) {
+            pathHtml = '<span class="path-item" data-path="">全部文件</span> <span class="path-sep">/</span> <span>当前文件夹</span>';
+        }
+
+        let html = `
+            <div class="storage-card">
+                <div class="storage-info">
+                    <h3>存储空间</h3>
+                    <div class="storage-progress"><div class="progress-fill" id="storageProgressFill" style="width:0%"></div></div>
+                    <div class="storage-text"><span id="storageUsed">0</span> / <span id="storageTotal">10</span> GB</div>
+                </div>
+                <button class="upload-btn" id="uploadBtn">📤 上传文件</button>
+            </div>
+            <div class="toolbar">
+                <div class="path-nav" id="pathNav">${pathHtml}</div>
+                <button class="create-folder-btn" id="createFolderBtn">📁 新建文件夹</button>
+            </div>
+            <div class="file-grid" id="fileGrid">
+        `;
+
+        if (files.length === 0) {
+            html += '<div class="empty-state">📂 文件夹为空</div>';
+        } else {
+            files.forEach(file => {
+                const icon = file.is_dir ? '📁' : getFileIcon(file.extension);
+                html += `
+                    <div class="file-item" data-id="${file.id}" data-isdir="${file.is_dir}" data-filename="${file.filename}">
+                        <input type="checkbox" class="file-checkbox" data-id="${file.id}" onchange="toggleSelect('${file.id}')">
+                        <div class="file-icon">${icon}</div>
+                        <div class="file-name">${file.filename}</div>
+                        <div class="file-meta">${file.size_text || file.size + ' B'}</div>
+                    </div>
+                `;
+            });
+        }
+        html += '</div>';
+
+        contentArea.innerHTML = html;
+
+        // 添加事件监听
+        document.getElementById('uploadBtn').addEventListener('click', uploadFile);
+        document.getElementById('createFolderBtn').addEventListener('click', () => openModal('folderModal'));
+
+        // 双击文件夹
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('dblclick', (e) => {
+                if (item.dataset.isdir === 'true') {
+                    currentParentId = item.dataset.id;
+                    renderFilesTab();
+                }
+            });
+        });
+
+        // 面包屑导航
+        document.querySelectorAll('.path-item').forEach(item => {
+            item.addEventListener('click', () => {
+                currentParentId = '';
+                renderFilesTab();
+            });
+        });
+    }
+
+    // ================== 分享标签页 ==================
+    async function renderSharesTab() {
+        if (!TOKEN) {
+            contentArea.innerHTML = '<div style="text-align:center;padding:60px">请先登录</div>';
+            return;
+        }
+
+        try {
+            const res = await apiCall('/shares');
+            const shares = res.data.shares || [];
+
+            let html = '<div class="share-list">';
+            if (shares.length === 0) {
+                html += '<div style="text-align:center;padding:40px">暂无分享</div>';
+            } else {
+                shares.forEach(share => {
+                    html += `
+                        <div class="share-item">
+                            <div class="share-info">
+                                <span>📄 ${share.filename}</span>
+                                <span class="share-link">${share.share_link}</span>
+                                <span>下载 ${share.download_count}/${share.max_downloads || '∞'}</span>
+                            </div>
+                            <button class="copy-btn" onclick="copyToClipboard('${share.share_link}')">复制链接</button>
+                        </div>
+                    `;
+                });
+            }
+            html += '</div>';
+            contentArea.innerHTML = html;
+        } catch (e) {
+            contentArea.innerHTML = '<div style="text-align:center;padding:60px;color:red">加载失败</div>';
+        }
+    }
+
+    // ================== 收藏标签页 ==================
+    async function renderFavoritesTab() {
+        if (!TOKEN) {
+            contentArea.innerHTML = '<div style="text-align:center;padding:60px">请先登录</div>';
+            return;
+        }
+
+        try {
+            const res = await apiCall('/favorites');
+            const favorites = res.data.favorites || [];
+
+            let html = '<div class="favorite-list">';
+            if (favorites.length === 0) {
+                html += '<div style="text-align:center;padding:40px">暂无收藏</div>';
+            } else {
+                favorites.forEach(fav => {
+                    const file = fav.file;
+                    html += `
+                        <div class="file-item" data-id="${file.id}">
+                            <div class="file-icon">📄</div>
+                            <div class="file-name">${file.filename}</div>
+                            <div class="file-meta">${file.size_text}</div>
+                        </div>
+                    `;
+                });
+            }
+            html += '</div>';
+            contentArea.innerHTML = html;
+        } catch (e) {
+            contentArea.innerHTML = '<div style="text-align:center;padding:60px;color:red">加载失败</div>';
+        }
+    }
+
+    // ================== 回收站标签页 ==================
+    async function renderTrashTab() {
+        if (!TOKEN) {
+            contentArea.innerHTML = '<div style="text-align:center;padding:60px">请先登录</div>';
+            return;
+        }
+
+        try {
+            const res = await apiCall('/trash');
+            const items = res.data.items || [];
+
+            let html = '<div class="trash-list">';
+            if (items.length === 0) {
+                html += '<div style="text-align:center;padding:40px">回收站为空</div>';
+            } else {
+                html += '<div class="file-grid">';
+                items.forEach(item => {
+                    html += `
+                        <div class="file-item" data-id="${item.id}">
+                            <div class="file-icon">🗑️</div>
+                            <div class="file-name">${item.filename}</div>
+                            <div class="file-meta">${item.size_text} · 剩余${item.expire_in}天</div>
+                            <div style="display:flex; gap:8px; margin-top:8px">
+                                <button onclick="restoreFile('${item.id}')">恢复</button>
+                                <button onclick="deletePermanently('${item.id}')">彻底删除</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            html += '</div>';
+            contentArea.innerHTML = html;
+        } catch (e) {
+            contentArea.innerHTML = '<div style="text-align:center;padding:60px;color:red">加载失败</div>';
+        }
+    }
+
+    // ================== 功能函数 ==================
+    async function fetchStorageInfo() {
+        try {
+            const res = await apiCall('/storage');
+            const storage = res.data;
+            const usedGB = (storage.used / (1024*1024*1024)).toFixed(2);
+            const totalGB = (storage.capacity / (1024*1024*1024)).toFixed(2);
+            document.getElementById('storageUsed').innerText = usedGB;
+            document.getElementById('storageTotal').innerText = totalGB;
+            document.getElementById('storageProgressFill').style.width = (storage.used / storage.capacity * 100) + '%';
+        } catch (e) {}
+    }
+
+    function getFileIcon(ext) {
+        const icons = { 'jpg': '🖼️', 'png': '🖼️', 'pdf': '📕', 'doc': '📘', 'mp4': '🎬' };
+        return icons[ext?.toLowerCase()] || '📄';
+    }
+
+    function toggleSelect(id) {
+        if (selectedItems.has(id)) selectedItems.delete(id);
+        else selectedItems.add(id);
+        document.getElementById('selectedCount').innerText = `已选择 ${selectedItems.size} 项`;
+        batchBar.style.display = selectedItems.size > 0 ? 'flex' : 'none';
+    }
+
+    async function uploadFile() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            if (currentParentId) formData.append('parent_id', currentParentId);
+            
+            try {
+                const response = await fetch(API_BASE + '/api/v1/files/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + TOKEN },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.code === 0) {
+                    alert('上传成功');
+                    renderFilesTab();
+                } else {
+                    alert('上传失败：' + data.message);
+                }
+            } catch (err) {
+                alert('上传出错');
+            }
+        };
+        input.click();
+    }
+
+    async function createShare() {
+        const fileIds = Array.from(selectedItems);
+        if (fileIds.length === 0) return;
+        
+        const password = document.getElementById('sharePassword').value;
+        const expireDays = parseInt(document.getElementById('shareExpireDays').value) || 7;
+        const maxDownloads = parseInt(document.getElementById('shareMaxDownloads').value) || 0;
+        
+        try {
+            for (const fileId of fileIds) {
+                await apiCall('/shares', {
+                    method: 'POST',
+                    body: JSON.stringify({ file_id: fileId, password: password || undefined, expire_days: expireDays, max_downloads: maxDownloads })
+                });
+            }
+            alert('分享创建成功');
+            closeModal('shareModal');
+            selectedItems.clear();
+            batchBar.style.display = 'none';
+            renderFilesTab();
+        } catch (e) {
+            alert('创建分享失败：' + e.message);
+        }
+    }
+
+    async function addFavorite() {
+        const fileIds = Array.from(selectedItems);
+        if (fileIds.length === 0) return;
+        
+        try {
+            for (const fileId of fileIds) {
+                await apiCall('/favorites', {
+                    method: 'POST',
+                    body: JSON.stringify({ file_id: fileId })
+                });
+            }
+            alert('收藏成功');
+            selectedItems.clear();
+            batchBar.style.display = 'none';
+        } catch (e) {
+            alert('收藏失败：' + e.message);
+        }
+    }
+
+    async function deleteFiles() {
+        const fileIds = Array.from(selectedItems);
+        if (fileIds.length === 0 || !confirm(`确定删除 ${fileIds.length} 个文件吗？`)) return;
+        
+        try {
+            await apiCall('/files/batch', {
+                method: 'DELETE',
+                body: JSON.stringify({ file_ids: fileIds })
+            });
+            alert('删除成功');
+            selectedItems.clear();
+            batchBar.style.display = 'none';
+            renderFilesTab();
+        } catch (e) {
+            alert('删除失败：' + e.message);
+        }
+    }
+
+    async function restoreFile(fileId) {
+        try {
+            await apiCall(`/trash/${fileId}/restore`, { method: 'POST' });
+            alert('恢复成功');
+            renderTrashTab();
+        } catch (e) {
+            alert('恢复失败');
+        }
+    }
+
+    async function deletePermanently(fileId) {
+        if (!confirm('确定彻底删除吗？')) return;
+        try {
+            await apiCall(`/trash/${fileId}`, { method: 'DELETE' });
+            alert('删除成功');
+            renderTrashTab();
+        } catch (e) {
+            alert('删除失败');
+        }
+    }
+
+    async function createFolder() {
+        const name = document.getElementById('folderName').value;
+        if (!name) return;
+        
+        try {
+            await apiCall('/folders', {
+                method: 'POST',
+                body: JSON.stringify({ name, parent_id: currentParentId || undefined })
+            });
+            alert('创建成功');
+            closeModal('folderModal');
+            renderFilesTab();
+        } catch (e) {
+            alert('创建失败：' + e.message);
+        }
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => alert('链接已复制'));
+    }
+
+    // ================== 模态框 ==================
+    window.openModal = (id) => document.getElementById(id).classList.add('active');
+    window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+    window.toggleSelect = toggleSelect;
+    window.restoreFile = restoreFile;
+    window.deletePermanently = deletePermanently;
+    window.copyToClipboard = copyToClipboard;
+
+    // 登录注册事件
+    document.getElementById('showLoginBtn').addEventListener('click', () => openModal('loginModal'));
+    document.getElementById('showRegisterBtn').addEventListener('click', () => openModal('registerModal'));
+    document.getElementById('logoutBtn').addEventListener('click', showLoggedOutUI);
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+        try {
+            const res = await apiCall('/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+            TOKEN = res.data.token;
+            localStorage.setItem('token', TOKEN);
+            closeModal('loginModal');
+            fetchUserProfile();
+        } catch (e) {
+            alert('登录失败：' + e.message);
+        }
+    });
+
+    document.getElementById('registerBtn').addEventListener('click', async () => {
+        const username = document.getElementById('regUsername').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        const confirm = document.getElementById('regConfirm').value;
+        if (password !== confirm) {
+            alert('两次密码不一致');
+            return;
+        }
+        try {
+            await apiCall('/register', {
+                method: 'POST',
+                body: JSON.stringify({ username, email, password, confirm_password: confirm })
+            });
+            alert('注册成功，请登录');
+            closeModal('registerModal');
+        } catch (e) {
+            alert('注册失败：' + e.message);
+        }
+    });
+
+    // 批量操作按钮
+    document.getElementById('batchShareBtn')?.addEventListener('click', () => openModal('shareModal'));
+    document.getElementById('batchFavoriteBtn')?.addEventListener('click', addFavorite);
+    document.getElementById('batchDeleteBtn')?.addEventListener('click', deleteFiles);
+    document.getElementById('createShareBtn')?.addEventListener('click', createShare);
+    document.getElementById('createFolderBtn')?.addEventListener('click', createFolder);
+
+    // 点击模态框背景关闭
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.remove('active');
+        });
+    });
+</script>
+</body>
+</html>
