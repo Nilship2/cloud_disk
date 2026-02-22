@@ -10,7 +10,7 @@
         body {
             font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
             background: linear-gradient(145deg, #f6f9fc 0%, #edf2f9 100%);
-            min-height: 100vh;
+            height: 600xp;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -20,6 +20,8 @@
         .app-container {
             max-width: 1300px;
             width: 100%;
+            max-height: 1300px;
+            height: 100%;
             background: rgba(255,255,255,0.7);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -49,6 +51,7 @@
             -webkit-text-fill-color: transparent;
         }
 
+        /* 主导航菜单 */
         .main-nav {
             display: flex;
             gap: 12px;
@@ -77,7 +80,6 @@
             display: flex;
             align-items: center;
             gap: 20px;
-            position: relative;
         }
 
         .user-info {
@@ -87,11 +89,6 @@
             background: white;
             padding: 6px 16px 6px 12px;
             border-radius: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .user-info:hover {
-            background: #f0f5fd;
         }
         .avatar {
             width: 36px;
@@ -104,38 +101,17 @@
             color: white;
             font-weight: 600;
         }
-
-        /* 用户下拉菜单 */
-        .user-dropdown {
-            position: absolute;
-            top: 60px;
-            right: 0;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            width: 200px;
-            display: none;
-            z-index: 1000;
-            overflow: hidden;
-        }
-        .user-dropdown.show {
-            display: block;
-        }
-        .dropdown-item {
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #8899bb;
             cursor: pointer;
-            transition: 0.2s;
-            color: #334155;
+            padding: 6px 12px;
+            border-radius: 30px;
         }
-        .dropdown-item:hover {
-            background: #f1f5f9;
-        }
-        .dropdown-item.logout {
+        .logout-btn:hover {
+            background: #eef2f6;
             color: #d32f2f;
-            border-top: 1px solid #e2e8f0;
         }
 
         .auth-buttons {
@@ -232,6 +208,11 @@
             cursor: pointer;
         }
 
+        /* 标签页内容容器 */
+        .tab-content {
+            min-height: 400px;
+        }
+
         /* 文件网格 */
         .file-grid {
             padding: 12px 32px 32px;
@@ -321,15 +302,6 @@
             padding: 6px 16px;
             border-radius: 30px;
             cursor: pointer;
-            margin-right: 8px;
-        }
-        .delete-btn {
-            background: none;
-            border: 1px solid #ef9a9a;
-            color: #c62828;
-            padding: 6px 16px;
-            border-radius: 30px;
-            cursor: pointer;
         }
 
         /* 收藏列表 */
@@ -344,21 +316,6 @@
         .trash-list {
             padding: 20px 32px;
         }
-        .trash-header {
-            padding: 16px 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .btn-danger {
-            background: #c62828;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 30px;
-            cursor: pointer;
-        }
 
         /* 模态框 */
         .modal {
@@ -369,40 +326,27 @@
             backdrop-filter: blur(4px);
             align-items: center;
             justify-content: center;
-            z-index: 2000;
+            z-index: 1000;
         }
         .modal.active { display: flex; }
         .modal-content {
             background: white;
             border-radius: 40px;
-            width: 400px;
-            max-width: 90%;
+            width: 380px;
             padding: 32px 28px;
-            max-height: 80vh;
-            overflow-y: auto;
         }
-        .modal-content h2 {
-            margin-bottom: 24px;
-            color: #1e2f4a;
-            font-weight: 600;
-        }
-        .modal-content input, .modal-content textarea {
+        .modal-content input {
             width: 100%;
             padding: 16px 18px;
             border: 1px solid #dce3ec;
             border-radius: 30px;
             margin-bottom: 16px;
             font-size: 15px;
-            background: #fafcff;
-        }
-        .modal-content textarea {
-            min-height: 80px;
-            resize: vertical;
         }
         .modal-actions {
             display: flex;
             gap: 12px;
-            margin-top: 24px;
+            margin-top: 16px;
         }
         .modal-actions button {
             flex: 1;
@@ -414,62 +358,6 @@
         }
         .modal-btn-primary { background: #1e3c72; color: white; }
         .modal-btn-secondary { background: #eef3fa; color: #2d3f5e; }
-
-        .user-avatar-large {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(145deg, #4f6d9a, #2b4a78);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 36px;
-            font-weight: 600;
-            margin: 0 auto 20px;
-        }
-
-        /* 新增：移动文件对话框中的文件夹树 */
-        .folder-tree {
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            padding: 12px;
-            margin-bottom: 16px;
-            background: #f8fafc;
-        }
-        .folder-item {
-            padding: 10px 16px;
-            margin: 4px 0;
-            border-radius: 30px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: 0.2s;
-        }
-        .folder-item:hover {
-            background: #e3eaf3;
-        }
-        .folder-item.selected {
-            background: #1e3c72;
-            color: white;
-        }
-        .folder-item .folder-icon {
-            font-size: 20px;
-        }
-        .folder-children {
-            margin-left: 28px;
-        }
-        .current-location {
-            background: #f0f5fd;
-            padding: 12px 16px;
-            border-radius: 30px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            color: #334155;
-        }
     </style>
 </head>
 <body>
@@ -485,21 +373,10 @@
             <div class="nav-item" data-tab="trash">🗑️ 回收站</div>
         </div>
         <div class="user-area" id="userArea">
-            <div class="user-info" id="userInfo" style="display: none;" onclick="toggleDropdown()">
+            <div class="user-info" id="userInfo" style="display: none;">
                 <span class="avatar" id="userAvatar">U</span>
                 <span class="username" id="userName">加载中...</span>
-                <span style="font-size: 12px;">▼</span>
-            </div>
-            <div class="user-dropdown" id="userDropdown">
-                <div class="dropdown-item" onclick="openModal('profileModal')">
-                    <span>👤</span> 个人资料
-                </div>
-                <div class="dropdown-item" onclick="openModal('passwordModal')">
-                    <span>🔒</span> 修改密码
-                </div>
-                <div class="dropdown-item logout" onclick="logout()">
-                    <span>🚪</span> 退出登录
-                </div>
+                <button class="logout-btn" id="logoutBtn">退出</button>
             </div>
             <div class="auth-buttons" id="authButtons">
                 <button class="btn-outline" id="showLoginBtn">登录</button>
@@ -511,11 +388,10 @@
     <!-- 动态内容区域 -->
     <div id="contentArea"></div>
 
-    <!-- 批量操作栏（修改，添加移动按钮） -->
+    <!-- 批量操作栏（只在文件标签页显示） -->
     <div class="batch-bar" id="batchBar" style="display: none;">
         <span id="selectedCount">已选择 0 项</span>
         <div class="batch-actions">
-            <button class="batch-btn" id="batchMoveBtn">📁 移动</button>
             <button class="batch-btn" id="batchShareBtn">🔗 分享</button>
             <button class="batch-btn" id="batchFavoriteBtn">❤️ 收藏</button>
             <button class="batch-btn danger" id="batchDeleteBtn">🗑️ 删除</button>
@@ -550,36 +426,6 @@
         </div>
     </div>
 
-    <!-- 个人资料模态框 -->
-    <div class="modal" id="profileModal">
-        <div class="modal-content">
-            <h2>个人资料</h2>
-            <div class="user-avatar-large" id="profileAvatar">U</div>
-            <input type="text" placeholder="用户名" id="profileUsername" readonly disabled>
-            <input type="email" placeholder="邮箱" id="profileEmail" readonly disabled>
-            <input type="url" placeholder="头像URL" id="profileAvatarUrl">
-            <textarea placeholder="个人简介" id="profileBio" rows="3"></textarea>
-            <div class="modal-actions">
-                <button class="modal-btn-secondary" onclick="closeModal('profileModal')">取消</button>
-                <button class="modal-btn-primary" id="updateProfileBtn">保存修改</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 修改密码模态框 -->
-    <div class="modal" id="passwordModal">
-        <div class="modal-content">
-            <h2>修改密码</h2>
-            <input type="password" placeholder="当前密码" id="oldPassword">
-            <input type="password" placeholder="新密码" id="newPassword">
-            <input type="password" placeholder="确认新密码" id="confirmPassword">
-            <div class="modal-actions">
-                <button class="modal-btn-secondary" onclick="closeModal('passwordModal')">取消</button>
-                <button class="modal-btn-primary" id="changePasswordBtn">确认修改</button>
-            </div>
-        </div>
-    </div>
-
     <!-- 创建分享模态框 -->
     <div class="modal" id="shareModal">
         <div class="modal-content">
@@ -605,24 +451,6 @@
             </div>
         </div>
     </div>
-    <!-- 新增：移动文件模态框 -->
-    <div class="modal" id="moveModal">
-        <div class="modal-content">
-            <h2>移动到文件夹</h2>
-            <div class="current-location" id="currentMoveLocation">
-                当前选择: 根目录
-            </div>
-            <div class="folder-tree" id="folderTree">
-                <!-- 文件夹树会动态加载 -->
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn-secondary" onclick="closeModal('moveModal')">取消</button>
-                <button class="modal-btn-primary" id="confirmMoveBtn">移动到此处</button>
-            </div>
-        </div>
-    </div>
-
-
 </div>
 
 <script>
@@ -639,131 +467,7 @@
     const authButtons = document.getElementById('authButtons');
     const mainNav = document.getElementById('mainNav');
     const batchBar = document.getElementById('batchBar');
-    const userDropdown = document.getElementById('userDropdown');
 
-
-    // 新增：移动文件相关变量
-    let moveSelectedItems = [];
-    let selectedFolderId = null;
-    let folderStructure = [];
-
-    // 新增：打开移动对话框
-    async function openMoveDialog() {
-        moveSelectedItems = Array.from(selectedItems);
-        if (moveSelectedItems.length === 0) return;
-        
-        selectedFolderId = null;
-        await loadFolderStructure();
-        openModal('moveModal');
-    }
-
-    // 新增：加载文件夹结构
-    async function loadFolderStructure(parentId = '') {
-        try {
-            const url = parentId ? `/files?parent_id=${parentId}&page_size=100` : '/files?page_size=100';
-            const res = await apiCall(url);
-            const files = res.data.files || [];
-            
-            // 只保留文件夹
-            const folders = files.filter(f => f.is_dir);
-            
-            if (parentId === '') {
-                folderStructure = folders;
-            }
-            
-            renderFolderTree(parentId, folders);
-        } catch (e) {
-            console.error('加载文件夹失败', e);
-        }
-    }
-
-    // 新增：渲染文件夹树
-    async function renderFolderTree(parentId, folders, level = 0) {
-        const container = document.getElementById('folderTree');
-        
-        if (parentId === '') {
-            // 根目录
-            let html = `
-                <div class="folder-item ${selectedFolderId === null ? 'selected' : ''}" 
-                     onclick="selectFolder(null)">
-                    <span class="folder-icon">📁</span>
-                    <span>根目录</span>
-                </div>
-            `;
-            
-            // 加载所有文件夹（递归方式简单处理，这里只加载两层）
-            for (const folder of folders) {
-                html += await renderFolderItem(folder, 1);
-            }
-            
-            container.innerHTML = html;
-        }
-    }
-
-    // 新增：递归渲染单个文件夹项
-    async function renderFolderItem(folder, level) {
-        let indent = '&nbsp;'.repeat(level * 4);
-        let html = `
-            <div class="folder-item ${selectedFolderId === folder.id ? 'selected' : ''}" 
-                 style="margin-left: ${level * 20}px"
-                 onclick="selectFolder('${folder.id}')">
-                <span class="folder-icon">📁</span>
-                <span>${folder.filename}</span>
-            </div>
-        `;
-        
-        // 加载子文件夹
-        try {
-            const url = `/files?parent_id=${folder.id}&page_size=100`;
-            const res = await apiCall(url);
-            const subFolders = (res.data.files || []).filter(f => f.is_dir);
-            
-            for (const sub of subFolders) {
-                html += await renderFolderItem(sub, level + 1);
-            }
-        } catch (e) {
-            console.error('加载子文件夹失败', e);
-        }
-        
-        return html;
-    }
-
-    // 新增：选择文件夹
-    function selectFolder(folderId) {
-        selectedFolderId = folderId;
-        
-        // 更新选中状态
-        document.querySelectorAll('.folder-item').forEach(item => {
-            item.classList.remove('selected');
-        });
-        event.currentTarget.classList.add('selected');
-        
-        // 更新当前位置显示
-        const locationText = folderId === null ? '根目录' : event.currentTarget.querySelector('span:last-child').textContent;
-        document.getElementById('currentMoveLocation').innerHTML = `当前选择: ${locationText}`;
-    }
-
-    // 新增：执行移动操作
-    async function moveFiles() {
-        if (moveSelectedItems.length === 0) return;
-        
-        try {
-            for (const fileId of moveSelectedItems) {
-                await apiCall(`/files/${fileId}/move`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ target_parent_id: selectedFolderId || undefined })
-                });
-            }
-            
-            alert(`成功移动 ${moveSelectedItems.length} 个文件`);
-            closeModal('moveModal');
-            selectedItems.clear();
-            batchBar.style.display = 'none';
-            renderFilesTab();
-        } catch (e) {
-            alert('移动失败：' + e.message);
-        }
-    }
     // 初始化
     if (TOKEN) {
         fetchUserProfile();
@@ -784,17 +488,6 @@
             loadTabContent(currentTab);
         });
     });
-
-    // 点击其他地方关闭下拉菜单
-    document.addEventListener('click', (e) => {
-        if (!userInfo.contains(e.target) && !userDropdown.contains(e.target)) {
-            userDropdown.classList.remove('show');
-        }
-    });
-
-    function toggleDropdown() {
-        userDropdown.classList.toggle('show');
-    }
 
     // ================== API 调用 ==================
     async function apiCall(endpoint, options = {}) {
@@ -828,76 +521,14 @@
         authButtons.style.display = 'none';
         document.getElementById('userName').textContent = currentUser?.username || '用户';
         document.getElementById('userAvatar').textContent = (currentUser?.username || 'U').charAt(0).toUpperCase();
-        document.getElementById('profileAvatar').textContent = (currentUser?.username || 'U').charAt(0).toUpperCase();
     }
 
     function showLoggedOutUI() {
         userInfo.style.display = 'none';
         authButtons.style.display = 'flex';
-        userDropdown.classList.remove('show');
         TOKEN = null;
         currentUser = null;
         localStorage.removeItem('token');
-    }
-
-    async function logout() {
-        showLoggedOutUI();
-        loadTabContent('files');
-    }
-
-    // ================== 个人资料管理 ==================
-    async function loadProfileData() {
-        if (!currentUser) return;
-        document.getElementById('profileUsername').value = currentUser.username || '';
-        document.getElementById('profileEmail').value = currentUser.email || '';
-        document.getElementById('profileAvatarUrl').value = currentUser.avatar || '';
-        document.getElementById('profileBio').value = currentUser.bio || '';
-        document.getElementById('profileAvatar').textContent = (currentUser.username || 'U').charAt(0).toUpperCase();
-    }
-
-    async function updateProfile() {
-        const avatar = document.getElementById('profileAvatarUrl').value;
-        const bio = document.getElementById('profileBio').value;
-        
-        try {
-            await apiCall('/profile', {
-                method: 'PUT',
-                body: JSON.stringify({ avatar, bio })
-            });
-            alert('资料更新成功');
-            closeModal('profileModal');
-            await fetchUserProfile(); // 重新加载用户信息
-        } catch (e) {
-            alert('更新失败：' + e.message);
-        }
-    }
-
-    async function changePassword() {
-        const oldPassword = document.getElementById('oldPassword').value;
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        
-        if (!oldPassword || !newPassword || !confirmPassword) {
-            alert('请填写所有密码字段');
-            return;
-        }
-        
-        if (newPassword !== confirmPassword) {
-            alert('新密码与确认密码不一致');
-            return;
-        }
-        
-        try {
-            await apiCall('/change-password', {
-                method: 'POST',
-                body: JSON.stringify({ old_password: oldPassword, new_password: newPassword, confirm_password: confirmPassword })
-            });
-            alert('密码修改成功，请重新登录');
-            closeModal('passwordModal');
-            logout();
-        } catch (e) {
-            alert('密码修改失败：' + e.message);
-        }
     }
 
     // ================== 标签页内容加载 ==================
@@ -917,8 +548,10 @@
             return;
         }
 
+        // 获取存储信息
         await fetchStorageInfo();
 
+        // 获取文件列表
         let files = [];
         try {
             const url = currentParentId ? `/files?parent_id=${currentParentId}` : '/files';
@@ -928,6 +561,7 @@
             console.error('获取文件列表失败', e);
         }
 
+        // 生成面包屑导航
         let pathHtml = '<span class="path-item" data-path="">全部文件</span>';
         if (currentParentId) {
             pathHtml = '<span class="path-item" data-path="">全部文件</span> <span class="path-sep">/</span> <span>当前文件夹</span>';
@@ -958,7 +592,7 @@
                     <div class="file-item" data-id="${file.id}" data-isdir="${file.is_dir}" data-filename="${file.filename}">
                         <input type="checkbox" class="file-checkbox" data-id="${file.id}" onchange="toggleSelect('${file.id}')">
                         <div class="file-icon">${icon}</div>
-                        <div class="file-name" ondblclick="renameFile('${file.id}', '${file.filename}')">${file.filename}</div>
+                        <div class="file-name">${file.filename}</div>
                         <div class="file-meta">${file.size_text || file.size + ' B'}</div>
                     </div>
                 `;
@@ -968,9 +602,11 @@
 
         contentArea.innerHTML = html;
 
+        // 添加事件监听
         document.getElementById('uploadBtn').addEventListener('click', uploadFile);
         document.getElementById('createFolderBtn').addEventListener('click', () => openModal('folderModal'));
 
+        // 双击文件夹
         document.querySelectorAll('.file-item').forEach(item => {
             item.addEventListener('dblclick', (e) => {
                 if (item.dataset.isdir === 'true') {
@@ -980,6 +616,7 @@
             });
         });
 
+        // 面包屑导航
         document.querySelectorAll('.path-item').forEach(item => {
             item.addEventListener('click', () => {
                 currentParentId = '';
@@ -1011,10 +648,7 @@
                                 <span class="share-link">${share.share_link}</span>
                                 <span>下载 ${share.download_count}/${share.max_downloads || '∞'}</span>
                             </div>
-                            <div>
-                                <button class="copy-btn" onclick="copyToClipboard('${share.share_link}')">复制</button>
-                                <button class="delete-btn" onclick="cancelShare(${share.id})">取消</button>
-                            </div>
+                            <button class="copy-btn" onclick="copyToClipboard('${share.share_link}')">复制链接</button>
                         </div>
                     `;
                 });
@@ -1070,12 +704,7 @@
             const res = await apiCall('/trash');
             const items = res.data.items || [];
 
-            let html = '<div class="trash-header">';
-            html += '<span>🗑️ 回收站（文件30天后自动删除）</span>';
-            html += '<button class="btn-danger" onclick="cleanTrash()">清空回收站</button>';
-            html += '</div>';
-
-            html += '<div class="trash-list">';
+            let html = '<div class="trash-list">';
             if (items.length === 0) {
                 html += '<div style="text-align:center;padding:40px">回收站为空</div>';
             } else {
@@ -1086,9 +715,9 @@
                             <div class="file-icon">🗑️</div>
                             <div class="file-name">${item.filename}</div>
                             <div class="file-meta">${item.size_text} · 剩余${item.expire_in}天</div>
-                            <div style="display:flex; gap:8px; margin-top:8px; justify-content:center;">
-                                <button class="batch-btn" onclick="restoreFile('${item.id}')">恢复</button>
-                                <button class="batch-btn danger" onclick="deletePermanently('${item.id}')">彻底删除</button>
+                            <div style="display:flex; gap:8px; margin-top:8px">
+                                <button onclick="restoreFile('${item.id}')">恢复</button>
+                                <button onclick="deletePermanently('${item.id}')">彻底删除</button>
                             </div>
                         </div>
                     `;
@@ -1158,21 +787,6 @@
         input.click();
     }
 
-    async function renameFile(fileId, oldName) {
-        const newName = prompt('请输入新文件名', oldName);
-        if (!newName || newName === oldName) return;
-        
-        try {
-            await apiCall(`/files/${fileId}/rename`, {
-                method: 'PUT',
-                body: JSON.stringify({ new_name: newName })
-            });
-            renderFilesTab();
-        } catch (e) {
-            alert('重命名失败：' + e.message);
-        }
-    }
-
     async function createShare() {
         const fileIds = Array.from(selectedItems);
         if (fileIds.length === 0) return;
@@ -1234,130 +848,6 @@
             alert('删除失败：' + e.message);
         }
     }
-    async function openMoveDialog() {
-    moveSelectedItems = Array.from(selectedItems);
-    if (moveSelectedItems.length === 0) return;
-    
-    selectedFolderId = null;
-    await loadFolderStructure();
-    openModal('moveModal');
-}
-
-// 加载文件夹结构
-async function loadFolderStructure(parentId = '') {
-    try {
-        const url = parentId ? `/files?parent_id=${parentId}&page_size=100` : '/files?page_size=100';
-        const res = await apiCall(url);
-        const files = res.data.files || [];
-        
-        // 只保留文件夹
-        const folders = files.filter(f => f.is_dir);
-        
-        if (parentId === '') {
-            folderStructure = folders;
-        }
-        
-        renderFolderTree(parentId, folders);
-    } catch (e) {
-        console.error('加载文件夹失败', e);
-    }
-}
-
-// 渲染文件夹树
-async function renderFolderTree(parentId, folders, level = 0) {
-    const container = document.getElementById('folderTree');
-    
-    if (parentId === '') {
-        // 根目录
-        let html = `
-            <div class="folder-item ${selectedFolderId === null ? 'selected' : ''}" 
-                 onclick="selectFolder(null)">
-                <span class="folder-icon">📁</span>
-                <span>根目录</span>
-            </div>
-        `;
-        
-        // 加载所有文件夹
-        for (const folder of folders) {
-            html += await renderFolderItem(folder, 1);
-        }
-        
-        container.innerHTML = html;
-    }
-}
-
-// 递归渲染单个文件夹项
-async function renderFolderItem(folder, level) {
-    let html = `
-        <div class="folder-item ${selectedFolderId === folder.id ? 'selected' : ''}" 
-             style="margin-left: ${level * 20}px"
-             onclick="selectFolder('${folder.id}')">
-            <span class="folder-icon">📁</span>
-            <span>${folder.filename}</span>
-        </div>
-    `;
-    
-    // 加载子文件夹
-    try {
-        const url = `/files?parent_id=${folder.id}&page_size=100`;
-        const res = await apiCall(url);
-        const subFolders = (res.data.files || []).filter(f => f.is_dir);
-        
-        for (const sub of subFolders) {
-            html += await renderFolderItem(sub, level + 1);
-        }
-    } catch (e) {
-        console.error('加载子文件夹失败', e);
-    }
-    
-    return html;
-}
-
-// 选择文件夹
-function selectFolder(folderId) {
-    selectedFolderId = folderId;
-    
-    // 更新选中状态
-    document.querySelectorAll('.folder-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-    event.currentTarget.classList.add('selected');
-    
-    // 更新当前位置显示
-    const locationText = folderId === null ? '根目录' : event.currentTarget.querySelector('span:last-child').textContent;
-    document.getElementById('currentMoveLocation').innerHTML = `当前选择: ${locationText}`;
-}
-
-// 执行移动操作
-async function moveFiles() {
-    if (moveSelectedItems.length === 0) return;
-    
-    try {
-        for (const fileId of moveSelectedItems) {
-            await apiCall(`/files/${fileId}/move`, {
-                method: 'PUT',
-                body: JSON.stringify({ target_parent_id: selectedFolderId || undefined })
-            });
-        }
-        
-        alert(`成功移动 ${moveSelectedItems.length} 个文件`);
-        closeModal('moveModal');
-        selectedItems.clear();
-        batchBar.style.display = 'none';
-        renderFilesTab();
-    } catch (e) {
-        alert('移动失败：' + e.message);
-    }
-}
-    async function cancelShare(shareId) {
-        if (!confirm('确定取消这个分享吗？')) return;
-        try {
-            await apiCall(`/shares/${shareId}`, { method: 'DELETE' });
-            renderSharesTab();
-        } catch (e) {
-            alert('取消失败：' + e.message);
-        }
-    }
 
     async function restoreFile(fileId) {
         try {
@@ -1377,17 +867,6 @@ async function moveFiles() {
             renderTrashTab();
         } catch (e) {
             alert('删除失败');
-        }
-    }
-
-    async function cleanTrash() {
-        if (!confirm('确定清空回收站吗？此操作不可恢复！')) return;
-        try {
-            const res = await apiCall('/trash/clean', { method: 'POST' });
-            alert(`已清理 ${res.data.cleaned_count} 个文件，释放 ${res.data.freed_space_text} 空间`);
-            renderTrashTab();
-        } catch (e) {
-            alert('清空失败：' + e.message);
         }
     }
 
@@ -1413,23 +892,17 @@ async function moveFiles() {
     }
 
     // ================== 模态框 ==================
-    window.openModal = (id) => {
-        if (id === 'profileModal') loadProfileData();
-        document.getElementById(id).classList.add('active');
-        userDropdown.classList.remove('show');
-    };
+    window.openModal = (id) => document.getElementById(id).classList.add('active');
     window.closeModal = (id) => document.getElementById(id).classList.remove('active');
     window.toggleSelect = toggleSelect;
-    window.renameFile = renameFile;
-    window.cancelShare = cancelShare;
     window.restoreFile = restoreFile;
     window.deletePermanently = deletePermanently;
-    window.cleanTrash = cleanTrash;
     window.copyToClipboard = copyToClipboard;
 
     // 登录注册事件
     document.getElementById('showLoginBtn').addEventListener('click', () => openModal('loginModal'));
     document.getElementById('showRegisterBtn').addEventListener('click', () => openModal('registerModal'));
+    document.getElementById('logoutBtn').addEventListener('click', showLoggedOutUI);
 
     document.getElementById('loginBtn').addEventListener('click', async () => {
         const username = document.getElementById('loginUsername').value;
@@ -1468,10 +941,6 @@ async function moveFiles() {
             alert('注册失败：' + e.message);
         }
     });
-
-    // 个人资料更新
-    document.getElementById('updateProfileBtn').addEventListener('click', updateProfile);
-    document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
 
     // 批量操作按钮
     document.getElementById('batchShareBtn')?.addEventListener('click', () => openModal('shareModal'));
