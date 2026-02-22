@@ -469,6 +469,140 @@
     font-size: 14px;
     color: #334155;
 }
+/* ===== 新增：文件详情弹窗样式 ===== */
+.file-detail-modal {
+    max-width: 500px;
+}
+.file-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.file-detail-icon {
+    font-size: 64px;
+    background: #f0f5fd;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 30px;
+}
+.file-detail-title {
+    flex: 1;
+}
+.file-detail-title h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: #1e293b;
+}
+.file-detail-title p {
+    color: #64748b;
+    font-size: 14px;
+}
+.file-detail-info {
+    background: #f8fafc;
+    border-radius: 24px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+.info-row:last-child {
+    border-bottom: none;
+}
+.info-label {
+    color: #64748b;
+    font-weight: 500;
+}
+.info-value {
+    color: #1e293b;
+    font-weight: 600;
+}
+.file-detail-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+.file-detail-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 40px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.download-btn {
+    background: #1e3c72;
+    color: white;
+}
+.download-btn:hover {
+    background: #2a4a82;
+}
+.share-btn {
+    background: #f0f5fd;
+    color: #1e3c72;
+}
+.share-btn:hover {
+    background: #e3eaf3;
+}
+.delete-btn-detail {
+    background: #fee2e2;
+    color: #c62828;
+}
+.delete-btn-detail:hover {
+    background: #fecaca;
+}
+
+/* ===== 新增：文件项上的操作按钮 ===== */
+.file-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: none;
+    gap: 4px;
+    background: white;
+    padding: 4px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.file-item:hover .file-actions {
+    display: flex;
+}
+.file-action-btn {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.2s;
+}
+.file-action-btn:hover {
+    background: #f0f5fd;
+}
+.download-icon:hover {
+    color: #1e3c72;
+}
+.delete-icon:hover {
+    color: #c62828;
+}
+
     </style>
 </head>
 <body>
@@ -621,6 +755,54 @@
         </div>
     </div>
 </div>
+    <!-- 新增：文件详情模态框 -->
+    <div class="modal" id="fileDetailModal">
+        <div class="modal-content file-detail-modal">
+            <div class="file-detail-header">
+                <div class="file-detail-icon" id="detailFileIcon">📄</div>
+                <div class="file-detail-title">
+                    <h3 id="detailFileName">文件名</h3>
+                    <p id="detailFilePath">路径</p>
+                </div>
+            </div>
+            <div class="file-detail-info" id="fileDetailInfo">
+                <div class="info-row">
+                    <span class="info-label">文件大小</span>
+                    <span class="info-value" id="detailFileSize">0 B</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">文件类型</span>
+                    <span class="info-value" id="detailFileType">未知</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">创建时间</span>
+                    <span class="info-value" id="detailCreateTime">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">修改时间</span>
+                    <span class="info-value" id="detailUpdateTime">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">文件ID</span>
+                    <span class="info-value" id="detailFileId">-</span>
+                </div>
+            </div>
+            <div class="file-detail-actions">
+                <button class="file-detail-btn download-btn" id="detailDownloadBtn">
+                    ⬇️ 下载
+                </button>
+                <button class="file-detail-btn share-btn" id="detailShareBtn">
+                    🔗 分享
+                </button>
+                <button class="file-detail-btn delete-btn-detail" id="detailDeleteBtn">
+                    🗑️ 删除
+                </button>
+            </div>
+            <div class="modal-actions" style="margin-top: 16px;">
+                <button class="modal-btn-secondary" onclick="closeModal('fileDetailModal')">关闭</button>
+            </div>
+        </div>
+    </div>
 
 <script>
     const API_BASE = '';
@@ -827,16 +1009,21 @@
             html += '<div class="empty-state">📂 文件夹为空</div>';
         } else {
             files.forEach(file => {
-                const icon = file.is_dir ? '📁' : getFileIcon(file.extension);
-                html += `
-                    <div class="file-item" data-id="${file.id}" data-isdir="${file.is_dir}" data-filename="${file.filename}">
-                        <input type="checkbox" class="file-checkbox" data-id="${file.id}" onchange="toggleSelect('${file.id}')">
-                        <div class="file-icon">${icon}</div>
-                        <div class="file-name" ondblclick="renameFile('${file.id}', '${file.filename}')">${file.filename}</div>
-                        <div class="file-meta">${file.size_text || file.size + ' B'}</div>
-                    </div>
-                `;
-            });
+    const icon = file.is_dir ? '📁' : getFileIcon(file.extension);
+    html += `
+        <div class="file-item" data-id="${file.id}" data-isdir="${file.is_dir}" data-filename="${file.filename}">
+            <input type="checkbox" class="file-checkbox" data-id="${file.id}" onchange="toggleSelect('${file.id}')">
+            <div class="file-icon" onclick="showFileDetail('${file.id}')">${icon}</div>
+            <div class="file-name" ondblclick="renameFile('${file.id}', '${file.filename}')">${file.filename}</div>
+            <div class="file-meta">${file.size_text || file.size + ' B'}</div>
+            <div class="file-actions">
+                ${!file.is_dir ? '<button class="file-action-btn download-icon" onclick="downloadFile(\'' + file.id + '\', \'' + file.filename + '\')">⬇️</button>' : ''}
+                <button class="file-action-btn" onclick="showFileDetail(\'${file.id}\')">ℹ️</button>
+                <button class="file-action-btn delete-icon" onclick="deleteSingleFile(\'${file.id}\')">🗑️</button>
+            </div>
+        </div>
+    `;
+});
         }
         html += '</div>';
 
@@ -978,7 +1165,104 @@
 
     // ================== 功能函数 ==================
         // ================== 新增：移动文件功能 ==================
-    let moveSelectedItems = [];
+        // ================== 新增：文件下载和详情功能 ==================
+    
+    // 下载单个文件
+    async function downloadFile(fileId, filename) {
+        try {
+            // 先获取文件详情（获取下载URL）
+            const res = await apiCall(`/files/${fileId}`);
+            const file = res.data;
+            
+            if (file.url) {
+                // 创建隐藏的a标签下载
+                const a = document.createElement('a');
+                a.href = file.url;
+                a.download = file.filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                // 如果没有直接URL，用API下载
+                window.open(API_BASE + `/api/v1/files/${fileId}/download`, '_blank');
+            }
+        } catch (e) {
+            alert('下载失败：' + e.message);
+        }
+    }
+
+    // 显示文件详情
+    async function showFileDetail(fileId) {
+        try {
+            const res = await apiCall(`/files/${fileId}`);
+            const file = res.data;
+            
+            // 填充详情
+            document.getElementById('detailFileName').textContent = file.filename;
+            document.getElementById('detailFilePath').textContent = file.path || '-';
+            document.getElementById('detailFileSize').textContent = file.size_text || file.size + ' B';
+            document.getElementById('detailFileType').textContent = file.mime_type || '未知';
+            document.getElementById('detailCreateTime').textContent = new Date(file.created_at).toLocaleString();
+            document.getElementById('detailUpdateTime').textContent = new Date(file.updated_at).toLocaleString();
+            document.getElementById('detailFileId').textContent = file.id;
+            document.getElementById('detailFileIcon').textContent = file.is_dir ? '📁' : getFileIcon(file.extension);
+            
+            // 设置按钮事件
+            const downloadBtn = document.getElementById('detailDownloadBtn');
+            const shareBtn = document.getElementById('detailShareBtn');
+            const deleteBtn = document.getElementById('detailDeleteBtn');
+            
+            // 下载按钮
+            downloadBtn.onclick = () => {
+                downloadFile(file.id, file.filename);
+                closeModal('fileDetailModal');
+            };
+            
+            // 分享按钮（如果文件不是文件夹）
+            if (file.is_dir) {
+                shareBtn.style.display = 'none';
+            } else {
+                shareBtn.style.display = 'flex';
+                shareBtn.onclick = () => {
+                    closeModal('fileDetailModal');
+                    selectedItems.clear();
+                    selectedItems.add(file.id);
+                    openModal('shareModal');
+                };
+            }
+            
+            // 删除按钮
+            deleteBtn.onclick = () => {
+                closeModal('fileDetailModal');
+                if (confirm(`确定删除文件 "${file.filename}" 吗？`)) {
+                    deleteSingleFile(file.id);
+                }
+            };
+            
+            openModal('fileDetailModal');
+        } catch (e) {
+            alert('获取文件详情失败：' + e.message);
+        }
+    }
+
+    // 删除单个文件
+    async function deleteSingleFile(fileId) {
+        if (!confirm('确定删除这个文件吗？')) return;
+        
+        try {
+            await apiCall(`/files/${fileId}`, { method: 'DELETE' });
+            alert('删除成功');
+            renderFilesTab(); // 刷新列表
+        } catch (e) {
+            alert('删除失败：' + e.message);
+        }
+    }
+
+    // 批量删除（已有，但确保功能正常）
+    // deleteFiles 函数已存在，不需要修改
+    
+    
+        let moveSelectedItems = [];
     let selectedFolderId = null;
     let folderStructure = [];
 
@@ -1301,6 +1585,9 @@
     };
     window.closeModal = (id) => document.getElementById(id).classList.remove('active');
     window.selectFolder = selectFolder;
+    window.downloadFile = downloadFile;
+    window.showFileDetail = showFileDetail;
+    window.deleteSingleFile = deleteSingleFile;
     window.openMoveDialog = openMoveDialog;
     window.toggleSelect = toggleSelect;
     window.renameFile = renameFile;
