@@ -602,7 +602,72 @@
 .delete-icon:hover {
     color: #c62828;
 }
-
+/* ===== 新增：秒传相关样式 ===== */
+.upload-area {
+    border: 2px dashed #cbd5e1;
+    border-radius: 30px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.upload-area:hover {
+    border-color: #1e3c72;
+    background: #f0f5fd;
+}
+.upload-area.dragover {
+    border-color: #2a5c9a;
+    background: #e3eaf3;
+}
+.upload-progress {
+    margin: 16px 0;
+    display: none;
+}
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 20px;
+    overflow: hidden;
+}
+.progress-fill-upload {
+    height: 100%;
+    background: linear-gradient(90deg, #2a5c9a, #3b7bc9);
+    width: 0%;
+    transition: width 0.3s;
+}
+.upload-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #64748b;
+}
+.instant-badge {
+    background: #10b981;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+.hash-info {
+    background: #f1f5f9;
+    padding: 12px 16px;
+    border-radius: 30px;
+    margin: 16px 0;
+    font-size: 13px;
+    word-break: break-all;
+    color: #334155;
+}
+.hash-label {
+    font-weight: 600;
+    color: #1e3c72;
+    margin-right: 8px;
+}
     </style>
 </head>
 <body>
@@ -803,7 +868,48 @@
             </div>
         </div>
     </div>
-
+        <!-- 新增：增强版上传模态框（支持秒传） -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content" style="width: 450px;">
+            <h2>📤 上传文件</h2>
+            <div class="upload-area" id="uploadArea" ondragover="event.preventDefault()" ondragenter="event.preventDefault()" ondrop="handleDrop(event)">
+                <div style="font-size: 48px; margin-bottom: 16px;">📁</div>
+                <div style="font-size: 16px; font-weight: 500; color: #1e293b; margin-bottom: 8px;">
+                    点击选择文件 或 拖拽到这里
+                </div>
+                <div style="font-size: 13px; color: #94a3b8;">
+                    支持任何格式，单个文件最大100MB
+                </div>
+                <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(this)">
+            </div>
+            
+            <div id="fileInfo" style="display: none;">
+                <div class="hash-info" id="hashInfo">
+                    <span class="hash-label">文件哈希:</span>
+                    <span id="fileHash">计算中...</span>
+                </div>
+                <div id="instantResult" style="display: none; margin-bottom: 16px;">
+                    <span class="instant-badge" id="instantBadge">✨ 秒传可用</span>
+                    <span style="margin-left: 8px; color: #10b981;" id="instantMessage">文件已存在，可直接秒传</span>
+                </div>
+            </div>
+            
+            <div class="upload-progress" id="uploadProgress">
+                <div class="progress-bar">
+                    <div class="progress-fill-upload" id="uploadProgressFill"></div>
+                </div>
+                <div class="upload-status">
+                    <span id="uploadStatusText">准备上传...</span>
+                    <span id="uploadPercent">0%</span>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" onclick="closeModal('uploadModal'); resetUploadModal()">取消</button>
+                <button class="modal-btn-primary" id="confirmUploadBtn" onclick="startUpload()" disabled>开始上传</button>
+            </div>
+        </div>
+    </div>
 <script>
     const API_BASE = '';
     let TOKEN = localStorage.getItem('token') || null;
@@ -848,6 +954,18 @@
         }
     });
 
+    // 拖拽相关事件
+document.getElementById('uploadArea').addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('dragover');
+});
+
+document.getElementById('uploadArea').addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragover');
+});
+
+document.getElementById('uploadArea').addEventListener('drop', handleDrop);
     function toggleDropdown() {
         userDropdown.classList.toggle('show');
     }
@@ -1014,7 +1132,7 @@
         <div class="file-item" data-id="${file.id}" data-isdir="${file.is_dir}" data-filename="${file.filename}">
             <input type="checkbox" class="file-checkbox" data-id="${file.id}" onchange="toggleSelect('${file.id}')">
             <div class="file-icon" onclick="showFileDetail('${file.id}')">${icon}</div>
-            <div class="file-name" ondblclick="renameFile('${file.id}', '${file.filename}')">${file.filename}</div>
+            <div class="file-name" ondblclick="renameFile('${file.id}', '${file.filename}')" title="双击重命名">${file.filename}</div>
             <div class="file-meta">${file.size_text || file.size + ' B'}</div>
             <div class="file-actions">
                 ${!file.is_dir ? '<button class="file-action-btn download-icon" onclick="downloadFile(\'' + file.id + '\', \'' + file.filename + '\')">⬇️</button>' : ''}
@@ -1029,7 +1147,8 @@
 
         contentArea.innerHTML = html;
 
-        document.getElementById('uploadBtn').addEventListener('click', uploadFile);
+        // 替换原来的上传按钮事件
+document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
         document.getElementById('createFolderBtn').addEventListener('click', () => openModal('folderModal'));
 
         document.querySelectorAll('.file-item').forEach(item => {
@@ -1166,7 +1285,218 @@
     // ================== 功能函数 ==================
         // ================== 新增：移动文件功能 ==================
         // ================== 新增：文件下载和详情功能 ==================
+        // ================== 新增：秒传功能 ==================
     
+    // 上传相关变量
+    let selectedFile = null;
+    let fileHash = null;
+    let existingFile = null;
+    
+    // 打开上传模态框
+    function openUploadModal() {
+        resetUploadModal();
+        openModal('uploadModal');
+    }
+    
+    // 重置上传模态框
+    function resetUploadModal() {
+        selectedFile = null;
+        fileHash = null;
+        existingFile = null;
+        document.getElementById('fileInput').value = '';
+        document.getElementById('fileInfo').style.display = 'none';
+        document.getElementById('instantResult').style.display = 'none';
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('confirmUploadBtn').disabled = true;
+        document.getElementById('fileHash').textContent = '计算中...';
+    }
+    
+    // 处理文件选择
+    async function handleFileSelect(input) {
+        if (input.files.length > 0) {
+            selectedFile = input.files[0];
+            await processSelectedFile();
+        }
+    }
+    
+    // 处理拖拽文件
+    async function handleDrop(event) {
+        event.preventDefault();
+        document.getElementById('uploadArea').classList.remove('dragover');
+        
+        if (event.dataTransfer.files.length > 0) {
+            selectedFile = event.dataTransfer.files[0];
+            await processSelectedFile();
+        }
+    }
+    
+    // 处理选中的文件
+    async function processSelectedFile() {
+        if (!selectedFile) return;
+        
+        // 显示文件信息
+        document.getElementById('fileInfo').style.display = 'block';
+        document.getElementById('fileHash').textContent = '计算哈希中...';
+        document.getElementById('confirmUploadBtn').disabled = true;
+        
+        // 计算文件哈希
+        fileHash = await calculateFileHash(selectedFile);
+        document.getElementById('fileHash').textContent = fileHash;
+        
+        // 检查文件是否已存在（秒传检测）
+        await checkFileExists(fileHash);
+    }
+    
+    // 计算文件哈希（使用 Web Crypto API）
+    async function calculateFileHash(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const buffer = e.target.result;
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                    resolve(hashHex);
+                } catch (error) {
+                    console.error('哈希计算失败', error);
+                    // 如果计算失败，返回一个模拟值（实际不会发生）
+                    resolve('hash-calculation-failed');
+                }
+            };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+    
+    // 检查文件是否存在（秒传检测）
+    async function checkFileExists(hash) {
+        if (!hash || hash === 'hash-calculation-failed') {
+            document.getElementById('instantResult').style.display = 'none';
+            document.getElementById('confirmUploadBtn').disabled = false;
+            return;
+        }
+        
+        try {
+            const res = await apiCall(`/files/check?hash=${hash}`);
+            
+            if (res.data) {
+                // 文件已存在，可以秒传
+                existingFile = res.data;
+                document.getElementById('instantResult').style.display = 'block';
+                document.getElementById('instantBadge').textContent = '✨ 秒传可用';
+                document.getElementById('instantMessage').textContent = `文件 "${existingFile.filename}" 已存在，可直接秒传`;
+                document.getElementById('confirmUploadBtn').textContent = '⚡ 秒传文件';
+                document.getElementById('confirmUploadBtn').disabled = false;
+            } else {
+                // 文件不存在，需要普通上传
+                document.getElementById('instantResult').style.display = 'none';
+                document.getElementById('confirmUploadBtn').textContent = '📤 开始上传';
+                document.getElementById('confirmUploadBtn').disabled = false;
+            }
+        } catch (e) {
+            console.error('检查文件失败', e);
+            document.getElementById('instantResult').style.display = 'none';
+            document.getElementById('confirmUploadBtn').disabled = false;
+        }
+    }
+    
+    // 开始上传（支持普通上传和秒传）
+    async function startUpload() {
+        if (!selectedFile) return;
+        
+        document.getElementById('uploadProgress').style.display = 'block';
+        document.getElementById('confirmUploadBtn').disabled = true;
+        
+        try {
+            if (existingFile) {
+                // 秒传
+                await instantUpload();
+            } else {
+                // 普通上传
+                await normalUpload();
+            }
+        } catch (e) {
+            alert('上传失败：' + e.message);
+            document.getElementById('uploadProgress').style.display = 'none';
+            document.getElementById('confirmUploadBtn').disabled = false;
+        }
+    }
+    
+    // 普通上传
+    async function normalUpload() {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        if (currentParentId) formData.append('parent_id', currentParentId);
+        
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    document.getElementById('uploadProgressFill').style.width = percent + '%';
+                    document.getElementById('uploadStatusText').textContent = '上传中...';
+                    document.getElementById('uploadPercent').textContent = percent + '%';
+                }
+            });
+            
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.code === 0) {
+                        document.getElementById('uploadStatusText').textContent = '上传完成！';
+                        document.getElementById('uploadPercent').textContent = '100%';
+                        setTimeout(() => {
+                            closeModal('uploadModal');
+                            resetUploadModal();
+                            renderFilesTab(); // 刷新文件列表
+                            resolve();
+                        }, 500);
+                    } else {
+                        reject(new Error(data.message));
+                    }
+                } else {
+                    reject(new Error('上传失败'));
+                }
+            });
+            
+            xhr.addEventListener('error', () => reject(new Error('网络错误')));
+            
+            xhr.open('POST', API_BASE + '/api/v1/files/upload');
+            xhr.setRequestHeader('Authorization', 'Bearer ' + TOKEN);
+            xhr.send(formData);
+        });
+    }
+    
+    // 秒传
+    async function instantUpload() {
+        try {
+            const res = await apiCall('/files/instant', {
+                method: 'POST',
+                body: JSON.stringify({
+                    hash: fileHash,
+                    filename: selectedFile.name,
+                    parent_id: currentParentId || undefined
+                })
+            });
+            
+            if (res.code === 0) {
+                document.getElementById('uploadStatusText').textContent = '秒传完成！';
+                document.getElementById('uploadPercent').textContent = '100%';
+                document.getElementById('uploadProgressFill').style.width = '100%';
+                setTimeout(() => {
+                    closeModal('uploadModal');
+                    resetUploadModal();
+                    renderFilesTab(); // 刷新文件列表
+                }, 500);
+            } else {
+                throw new Error(res.message);
+            }
+        } catch (e) {
+            alert('秒传失败：' + e.message);
+        }
+    }
     // 下载单个文件
     async function downloadFile(fileId, filename) {
         try {
@@ -1588,6 +1918,11 @@
     window.downloadFile = downloadFile;
     window.showFileDetail = showFileDetail;
     window.deleteSingleFile = deleteSingleFile;
+    window.openUploadModal = openUploadModal;
+    window.handleFileSelect = handleFileSelect;
+    window.handleDrop = handleDrop;
+    window.startUpload = startUpload;
+    window.resetUploadModal = resetUploadModal;
     window.openMoveDialog = openMoveDialog;
     window.toggleSelect = toggleSelect;
     window.renameFile = renameFile;
