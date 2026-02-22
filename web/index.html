@@ -428,48 +428,47 @@
             font-weight: 600;
             margin: 0 auto 20px;
         }
-
-        /* 新增：移动文件对话框中的文件夹树 */
-        .folder-tree {
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            padding: 12px;
-            margin-bottom: 16px;
-            background: #f8fafc;
-        }
-        .folder-item {
-            padding: 10px 16px;
-            margin: 4px 0;
-            border-radius: 30px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: 0.2s;
-        }
-        .folder-item:hover {
-            background: #e3eaf3;
-        }
-        .folder-item.selected {
-            background: #1e3c72;
-            color: white;
-        }
-        .folder-item .folder-icon {
-            font-size: 20px;
-        }
-        .folder-children {
-            margin-left: 28px;
-        }
-        .current-location {
-            background: #f0f5fd;
-            padding: 12px 16px;
-            border-radius: 30px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            color: #334155;
-        }
+        /* ===== 新增：移动文件对话框样式 ===== */
+.folder-tree {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 12px;
+    margin-bottom: 16px;
+    background: #f8fafc;
+}
+.folder-item {
+    padding: 10px 16px;
+    margin: 4px 0;
+    border-radius: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.2s;
+}
+.folder-item:hover {
+    background: #e3eaf3;
+}
+.folder-item.selected {
+    background: #1e3c72;
+    color: white;
+}
+.folder-item .folder-icon {
+    font-size: 20px;
+}
+.folder-children {
+    margin-left: 28px;
+}
+.current-location {
+    background: #f0f5fd;
+    padding: 12px 16px;
+    border-radius: 30px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #334155;
+}
     </style>
 </head>
 <body>
@@ -511,7 +510,7 @@
     <!-- 动态内容区域 -->
     <div id="contentArea"></div>
 
-    <!-- 批量操作栏（修改，添加移动按钮） -->
+        <!-- 批量操作栏（确保有移动按钮） -->
     <div class="batch-bar" id="batchBar" style="display: none;">
         <span id="selectedCount">已选择 0 项</span>
         <div class="batch-actions">
@@ -595,17 +594,7 @@
     </div>
 
     <!-- 新建文件夹模态框 -->
-    <div class="modal" id="folderModal">
-        <div class="modal-content">
-            <h2>新建文件夹</h2>
-            <input type="text" placeholder="文件夹名称" id="folderName">
-            <div class="modal-actions">
-                <button class="modal-btn-secondary" onclick="closeModal('folderModal')">取消</button>
-                <button class="modal-btn-primary" id="createFolderBtn">创建</button>
-            </div>
-        </div>
-    </div>
-    <!-- 新增：移动文件模态框 -->
+         <!-- 新增：移动文件模态框 -->
     <div class="modal" id="moveModal">
         <div class="modal-content">
             <h2>移动到文件夹</h2>
@@ -621,8 +610,16 @@
             </div>
         </div>
     </div>
-
-
+    <div class="modal" id="folderModal">
+        <div class="modal-content">
+            <h2>新建文件夹</h2>
+            <input type="text" placeholder="文件夹名称" id="folderName">
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" onclick="closeModal('folderModal')">取消</button>
+                <button class="modal-btn-primary" id="createFolderBtn">创建</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -641,129 +638,6 @@
     const batchBar = document.getElementById('batchBar');
     const userDropdown = document.getElementById('userDropdown');
 
-
-    // 新增：移动文件相关变量
-    let moveSelectedItems = [];
-    let selectedFolderId = null;
-    let folderStructure = [];
-
-    // 新增：打开移动对话框
-    async function openMoveDialog() {
-        moveSelectedItems = Array.from(selectedItems);
-        if (moveSelectedItems.length === 0) return;
-        
-        selectedFolderId = null;
-        await loadFolderStructure();
-        openModal('moveModal');
-    }
-
-    // 新增：加载文件夹结构
-    async function loadFolderStructure(parentId = '') {
-        try {
-            const url = parentId ? `/files?parent_id=${parentId}&page_size=100` : '/files?page_size=100';
-            const res = await apiCall(url);
-            const files = res.data.files || [];
-            
-            // 只保留文件夹
-            const folders = files.filter(f => f.is_dir);
-            
-            if (parentId === '') {
-                folderStructure = folders;
-            }
-            
-            renderFolderTree(parentId, folders);
-        } catch (e) {
-            console.error('加载文件夹失败', e);
-        }
-    }
-
-    // 新增：渲染文件夹树
-    async function renderFolderTree(parentId, folders, level = 0) {
-        const container = document.getElementById('folderTree');
-        
-        if (parentId === '') {
-            // 根目录
-            let html = `
-                <div class="folder-item ${selectedFolderId === null ? 'selected' : ''}" 
-                     onclick="selectFolder(null)">
-                    <span class="folder-icon">📁</span>
-                    <span>根目录</span>
-                </div>
-            `;
-            
-            // 加载所有文件夹（递归方式简单处理，这里只加载两层）
-            for (const folder of folders) {
-                html += await renderFolderItem(folder, 1);
-            }
-            
-            container.innerHTML = html;
-        }
-    }
-
-    // 新增：递归渲染单个文件夹项
-    async function renderFolderItem(folder, level) {
-        let indent = '&nbsp;'.repeat(level * 4);
-        let html = `
-            <div class="folder-item ${selectedFolderId === folder.id ? 'selected' : ''}" 
-                 style="margin-left: ${level * 20}px"
-                 onclick="selectFolder('${folder.id}')">
-                <span class="folder-icon">📁</span>
-                <span>${folder.filename}</span>
-            </div>
-        `;
-        
-        // 加载子文件夹
-        try {
-            const url = `/files?parent_id=${folder.id}&page_size=100`;
-            const res = await apiCall(url);
-            const subFolders = (res.data.files || []).filter(f => f.is_dir);
-            
-            for (const sub of subFolders) {
-                html += await renderFolderItem(sub, level + 1);
-            }
-        } catch (e) {
-            console.error('加载子文件夹失败', e);
-        }
-        
-        return html;
-    }
-
-    // 新增：选择文件夹
-    function selectFolder(folderId) {
-        selectedFolderId = folderId;
-        
-        // 更新选中状态
-        document.querySelectorAll('.folder-item').forEach(item => {
-            item.classList.remove('selected');
-        });
-        event.currentTarget.classList.add('selected');
-        
-        // 更新当前位置显示
-        const locationText = folderId === null ? '根目录' : event.currentTarget.querySelector('span:last-child').textContent;
-        document.getElementById('currentMoveLocation').innerHTML = `当前选择: ${locationText}`;
-    }
-
-    // 新增：执行移动操作
-    async function moveFiles() {
-        if (moveSelectedItems.length === 0) return;
-        
-        try {
-            for (const fileId of moveSelectedItems) {
-                await apiCall(`/files/${fileId}/move`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ target_parent_id: selectedFolderId || undefined })
-                });
-            }
-            
-            alert(`成功移动 ${moveSelectedItems.length} 个文件`);
-            closeModal('moveModal');
-            selectedItems.clear();
-            batchBar.style.display = 'none';
-            renderFilesTab();
-        } catch (e) {
-            alert('移动失败：' + e.message);
-        }
-    }
     // 初始化
     if (TOKEN) {
         fetchUserProfile();
@@ -1103,6 +977,127 @@
     }
 
     // ================== 功能函数 ==================
+        // ================== 新增：移动文件功能 ==================
+    let moveSelectedItems = [];
+    let selectedFolderId = null;
+    let folderStructure = [];
+
+    // 打开移动对话框
+    async function openMoveDialog() {
+        moveSelectedItems = Array.from(selectedItems);
+        if (moveSelectedItems.length === 0) return;
+        
+        selectedFolderId = null;
+        await loadFolderStructure();
+        openModal('moveModal');
+    }
+
+    // 加载文件夹结构
+    async function loadFolderStructure(parentId = '') {
+        try {
+            const url = parentId ? `/files?parent_id=${parentId}&page_size=100` : '/files?page_size=100';
+            const res = await apiCall(url);
+            const files = res.data.files || [];
+            
+            // 只保留文件夹
+            const folders = files.filter(f => f.is_dir);
+            
+            if (parentId === '') {
+                folderStructure = folders;
+            }
+            
+            renderFolderTree(parentId, folders);
+        } catch (e) {
+            console.error('加载文件夹失败', e);
+        }
+    }
+
+    // 渲染文件夹树
+    async function renderFolderTree(parentId, folders, level = 0) {
+        const container = document.getElementById('folderTree');
+        
+        if (parentId === '') {
+            // 根目录
+            let html = `
+                <div class="folder-item ${selectedFolderId === null ? 'selected' : ''}" 
+                     onclick="selectFolder(null)">
+                    <span class="folder-icon">📁</span>
+                    <span>根目录</span>
+                </div>
+            `;
+            
+            // 加载所有文件夹
+            for (const folder of folders) {
+                html += await renderFolderItem(folder, 1);
+            }
+            
+            container.innerHTML = html;
+        }
+    }
+
+    // 递归渲染单个文件夹项
+    async function renderFolderItem(folder, level) {
+        let html = `
+            <div class="folder-item ${selectedFolderId === folder.id ? 'selected' : ''}" 
+                 style="margin-left: ${level * 20}px"
+                 onclick="selectFolder('${folder.id}')">
+                <span class="folder-icon">📁</span>
+                <span>${folder.filename}</span>
+            </div>
+        `;
+        
+        // 加载子文件夹
+        try {
+            const url = `/files?parent_id=${folder.id}&page_size=100`;
+            const res = await apiCall(url);
+            const subFolders = (res.data.files || []).filter(f => f.is_dir);
+            
+            for (const sub of subFolders) {
+                html += await renderFolderItem(sub, level + 1);
+            }
+        } catch (e) {
+            console.error('加载子文件夹失败', e);
+        }
+        
+        return html;
+    }
+
+    // 选择文件夹
+    function selectFolder(folderId) {
+        selectedFolderId = folderId;
+        
+        // 更新选中状态
+        document.querySelectorAll('.folder-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        event.currentTarget.classList.add('selected');
+        
+        // 更新当前位置显示
+        const locationText = folderId === null ? '根目录' : event.currentTarget.querySelector('span:last-child').textContent;
+        document.getElementById('currentMoveLocation').innerHTML = `当前选择: ${locationText}`;
+    }
+
+    // 执行移动操作
+    async function moveFiles() {
+        if (moveSelectedItems.length === 0) return;
+        
+        try {
+            for (const fileId of moveSelectedItems) {
+                await apiCall(`/files/${fileId}/move`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ target_parent_id: selectedFolderId || undefined })
+                });
+            }
+            
+            alert(`成功移动 ${moveSelectedItems.length} 个文件`);
+            closeModal('moveModal');
+            selectedItems.clear();
+            batchBar.style.display = 'none';
+            renderFilesTab();
+        } catch (e) {
+            alert('移动失败：' + e.message);
+        }
+    }
     async function fetchStorageInfo() {
         try {
             const res = await apiCall('/storage');
@@ -1234,121 +1229,7 @@
             alert('删除失败：' + e.message);
         }
     }
-    async function openMoveDialog() {
-    moveSelectedItems = Array.from(selectedItems);
-    if (moveSelectedItems.length === 0) return;
-    
-    selectedFolderId = null;
-    await loadFolderStructure();
-    openModal('moveModal');
-}
 
-// 加载文件夹结构
-async function loadFolderStructure(parentId = '') {
-    try {
-        const url = parentId ? `/files?parent_id=${parentId}&page_size=100` : '/files?page_size=100';
-        const res = await apiCall(url);
-        const files = res.data.files || [];
-        
-        // 只保留文件夹
-        const folders = files.filter(f => f.is_dir);
-        
-        if (parentId === '') {
-            folderStructure = folders;
-        }
-        
-        renderFolderTree(parentId, folders);
-    } catch (e) {
-        console.error('加载文件夹失败', e);
-    }
-}
-
-// 渲染文件夹树
-async function renderFolderTree(parentId, folders, level = 0) {
-    const container = document.getElementById('folderTree');
-    
-    if (parentId === '') {
-        // 根目录
-        let html = `
-            <div class="folder-item ${selectedFolderId === null ? 'selected' : ''}" 
-                 onclick="selectFolder(null)">
-                <span class="folder-icon">📁</span>
-                <span>根目录</span>
-            </div>
-        `;
-        
-        // 加载所有文件夹
-        for (const folder of folders) {
-            html += await renderFolderItem(folder, 1);
-        }
-        
-        container.innerHTML = html;
-    }
-}
-
-// 递归渲染单个文件夹项
-async function renderFolderItem(folder, level) {
-    let html = `
-        <div class="folder-item ${selectedFolderId === folder.id ? 'selected' : ''}" 
-             style="margin-left: ${level * 20}px"
-             onclick="selectFolder('${folder.id}')">
-            <span class="folder-icon">📁</span>
-            <span>${folder.filename}</span>
-        </div>
-    `;
-    
-    // 加载子文件夹
-    try {
-        const url = `/files?parent_id=${folder.id}&page_size=100`;
-        const res = await apiCall(url);
-        const subFolders = (res.data.files || []).filter(f => f.is_dir);
-        
-        for (const sub of subFolders) {
-            html += await renderFolderItem(sub, level + 1);
-        }
-    } catch (e) {
-        console.error('加载子文件夹失败', e);
-    }
-    
-    return html;
-}
-
-// 选择文件夹
-function selectFolder(folderId) {
-    selectedFolderId = folderId;
-    
-    // 更新选中状态
-    document.querySelectorAll('.folder-item').forEach(item => {
-        item.classList.remove('selected');
-    });
-    event.currentTarget.classList.add('selected');
-    
-    // 更新当前位置显示
-    const locationText = folderId === null ? '根目录' : event.currentTarget.querySelector('span:last-child').textContent;
-    document.getElementById('currentMoveLocation').innerHTML = `当前选择: ${locationText}`;
-}
-
-// 执行移动操作
-async function moveFiles() {
-    if (moveSelectedItems.length === 0) return;
-    
-    try {
-        for (const fileId of moveSelectedItems) {
-            await apiCall(`/files/${fileId}/move`, {
-                method: 'PUT',
-                body: JSON.stringify({ target_parent_id: selectedFolderId || undefined })
-            });
-        }
-        
-        alert(`成功移动 ${moveSelectedItems.length} 个文件`);
-        closeModal('moveModal');
-        selectedItems.clear();
-        batchBar.style.display = 'none';
-        renderFilesTab();
-    } catch (e) {
-        alert('移动失败：' + e.message);
-    }
-}
     async function cancelShare(shareId) {
         if (!confirm('确定取消这个分享吗？')) return;
         try {
@@ -1419,6 +1300,8 @@ async function moveFiles() {
         userDropdown.classList.remove('show');
     };
     window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+    window.selectFolder = selectFolder;
+    window.openMoveDialog = openMoveDialog;
     window.toggleSelect = toggleSelect;
     window.renameFile = renameFile;
     window.cancelShare = cancelShare;
@@ -1474,6 +1357,8 @@ async function moveFiles() {
     document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
 
     // 批量操作按钮
+    document.getElementById('batchMoveBtn')?.addEventListener('click', openMoveDialog);
+    document.getElementById('confirmMoveBtn')?.addEventListener('click', moveFiles);
     document.getElementById('batchShareBtn')?.addEventListener('click', () => openModal('shareModal'));
     document.getElementById('batchFavoriteBtn')?.addEventListener('click', addFavorite);
     document.getElementById('batchDeleteBtn')?.addEventListener('click', deleteFiles);
