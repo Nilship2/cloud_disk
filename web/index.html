@@ -1454,7 +1454,7 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
         }
     }
     
-    // 开始上传（支持普通上传和秒传）
+        // 开始上传（简化版：如果闪传失败就普通上传）
     async function startUpload() {
         if (!selectedFile) return;
         
@@ -1463,8 +1463,13 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
         
         try {
             if (existingFile) {
-                // 秒传
-                await instantUpload();
+                // 尝试闪传
+                try {
+                    await instantUpload();
+                } catch (e) {
+                    console.log('闪传失败，转为普通上传', e);
+                    await normalUpload();
+                }
             } else {
                 // 普通上传
                 await normalUpload();
