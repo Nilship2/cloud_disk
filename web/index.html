@@ -1477,6 +1477,7 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
     }
     
     // 普通上传
+        // 普通上传
     async function normalUpload() {
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -1495,9 +1496,11 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
             });
             
             xhr.addEventListener('load', () => {
-                if (xhr.status === 200) {
+                // 201 Created 也是成功状态码
+                if (xhr.status === 200 || xhr.status === 201) {
                     try {
                         const data = JSON.parse(xhr.responseText);
+                        // 检查code是否为0（成功）
                         if (data.code === 0) {
                             document.getElementById('uploadStatusText').textContent = '上传完成！';
                             document.getElementById('uploadPercent').textContent = '100%';
@@ -1508,26 +1511,21 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
                                 resolve();
                             }, 500);
                         } else {
-                            // 显示后端返回的错误信息
+                            // 后端返回了错误码，但HTTP状态是200
                             alert('上传失败：' + (data.message || '未知错误'));
                             reject(new Error(data.message));
                         }
                     } catch (e) {
-                        // 如果返回的不是JSON，可能是文件本身
-                        if (xhr.responseText.includes('success') || xhr.responseText.includes('成功')) {
-                            // 可能成功了但返回格式不对
-                            document.getElementById('uploadStatusText').textContent = '上传完成！';
-                            document.getElementById('uploadPercent').textContent = '100%';
-                            setTimeout(() => {
-                                closeModal('uploadModal');
-                                resetUploadModal();
-                                renderFilesTab();
-                                resolve();
-                            }, 500);
-                        } else {
-                            alert('上传失败：服务器返回格式错误');
-                            reject(e);
-                        }
+                        // 如果返回的不是JSON，但状态码是成功
+                        console.log('上传成功（非JSON响应）', xhr.responseText);
+                        document.getElementById('uploadStatusText').textContent = '上传完成！';
+                        document.getElementById('uploadPercent').textContent = '100%';
+                        setTimeout(() => {
+                            closeModal('uploadModal');
+                            resetUploadModal();
+                            renderFilesTab();
+                            resolve();
+                        }, 500);
                     }
                 } else {
                     alert('上传失败：HTTP ' + xhr.status);
