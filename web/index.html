@@ -1557,52 +1557,70 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
     
     // 保存分享编辑
         // 保存分享编辑
+        // 保存分享编辑
     async function saveShareEdit() {
         if (!currentShareDetail) return;
         
+        // 获取表单值
         const password = document.getElementById('editSharePassword').value;
         const expireDays = document.getElementById('editShareExpireDays').value;
         const maxDownloads = document.getElementById('editShareMaxDownloads').value;
         
-        // 构建更新数据，只发送有修改的字段
+        // 构建完整的更新数据（包含所有字段，即使是原来的值）
         const updateData = {};
         
-        // 密码：如果输入了密码才发送，否则不发送（表示不修改）
+        // 密码处理：如果输入了新密码就更新，否则发送 undefined（后端会忽略）
         if (password && password.trim() !== '') {
             updateData.password = password.trim();
+        } else {
+            // 如果密码框为空，表示要清除密码
+            updateData.password = null;
         }
         
-        // 过期天数：只有输入了有效值才发送
+        // 过期天数处理
         if (expireDays !== '' && !isNaN(parseInt(expireDays))) {
             updateData.expire_days = parseInt(expireDays);
+        } else {
+            // 如果未输入，保持原值
+            updateData.expire_days = currentShareDetail.expire_time ? 7 : 0;
         }
         
-        // 最大下载次数：只有输入了有效值才发送
+        // 最大下载次数处理
         if (maxDownloads !== '' && !isNaN(parseInt(maxDownloads))) {
             updateData.max_downloads = parseInt(maxDownloads);
+        } else {
+            updateData.max_downloads = currentShareDetail.max_downloads || 0;
         }
         
-        // 如果没有要更新的字段，提示用户
-        if (Object.keys(updateData).length === 0) {
-            alert('没有要更新的内容');
-            toggleShareEdit(false);
-            return;
-        }
+        // 添加 status 字段（保持原状态）
+        updateData.status = currentShareDetail.status;
         
-        console.log('发送更新数据:', updateData); // 调试用
+        console.log('发送更新数据:', JSON.stringify(updateData));
         
         try {
-            const res = await apiCall(`/shares/${currentShareDetail.id}`, {
+            const res = await fetch(API_BASE + `/api/v1/shares/${currentShareDetail.id}`, {
                 method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + TOKEN
+                },
                 body: JSON.stringify(updateData)
             });
-            alert('分享更新成功');
-            toggleShareEdit(false);
-            await viewShareDetail(currentShareDetail.id); // 刷新详情
-            await renderSharesTab(); // 刷新列表
+            
+            const data = await res.json();
+            
+            if (res.ok && data.code === 0) {
+                alert('分享更新成功');
+                toggleShareEdit(false);
+                await viewShareDetail(currentShareDetail.id); // 刷新详情
+                await renderSharesTab(); // 刷新列表
+            } else {
+                console.error('后端返回错误:', data);
+                alert('更新失败：' + (data.message || '未知错误'));
+            }
         } catch (e) {
-            console.error('更新失败:', e);
-            alert('更新失败：' + (e.message || '参数无效，请检查输入'));
+            console.error('请求失败:', e);
+            alert('更新失败：网络错误');
         }
     }
     
