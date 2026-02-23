@@ -1527,11 +1527,22 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
                 document.getElementById('shareExpireDays').textContent = '永久';
             }
             
-            // 填充编辑表单
+                        // 填充编辑表单
             document.getElementById('editSharePassword').value = ''; // 密码不回显，留空表示不修改
-            document.getElementById('editShareExpireDays').value = share.expire_time ? 7 : 0;
-            document.getElementById('editShareMaxDownloads').value = share.max_downloads || 0;
             
+            // 设置过期天数
+            if (share.expire_time) {
+                // 如果有过期时间，计算剩余天数
+                const expireDate = new Date(share.expire_time);
+                const now = new Date();
+                const daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
+                document.getElementById('editShareExpireDays').value = daysLeft > 0 ? daysLeft : 7;
+            } else {
+                document.getElementById('editShareExpireDays').value = 0; // 0表示永久
+            }
+            
+            // 设置最大下载次数
+            document.getElementById('editShareMaxDownloads').value = share.max_downloads || 0;
             openModal('shareDetailModal');
         } catch (e) {
             alert('获取分享详情失败：' + e.message);
@@ -1545,29 +1556,53 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
     }
     
     // 保存分享编辑
+        // 保存分享编辑
     async function saveShareEdit() {
         if (!currentShareDetail) return;
         
         const password = document.getElementById('editSharePassword').value;
-        const expireDays = parseInt(document.getElementById('editShareExpireDays').value) || 0;
-        const maxDownloads = parseInt(document.getElementById('editShareMaxDownloads').value) || 0;
+        const expireDays = document.getElementById('editShareExpireDays').value;
+        const maxDownloads = document.getElementById('editShareMaxDownloads').value;
         
+        // 构建更新数据，只发送有修改的字段
         const updateData = {};
-        if (password) updateData.password = password;
-        if (expireDays >= 0) updateData.expire_days = expireDays;
-        if (maxDownloads >= 0) updateData.max_downloads = maxDownloads;
+        
+        // 密码：如果输入了密码才发送，否则不发送（表示不修改）
+        if (password && password.trim() !== '') {
+            updateData.password = password.trim();
+        }
+        
+        // 过期天数：只有输入了有效值才发送
+        if (expireDays !== '' && !isNaN(parseInt(expireDays))) {
+            updateData.expire_days = parseInt(expireDays);
+        }
+        
+        // 最大下载次数：只有输入了有效值才发送
+        if (maxDownloads !== '' && !isNaN(parseInt(maxDownloads))) {
+            updateData.max_downloads = parseInt(maxDownloads);
+        }
+        
+        // 如果没有要更新的字段，提示用户
+        if (Object.keys(updateData).length === 0) {
+            alert('没有要更新的内容');
+            toggleShareEdit(false);
+            return;
+        }
+        
+        console.log('发送更新数据:', updateData); // 调试用
         
         try {
-            await apiCall(`/shares/${currentShareDetail.id}`, {
+            const res = await apiCall(`/shares/${currentShareDetail.id}`, {
                 method: 'PUT',
                 body: JSON.stringify(updateData)
             });
             alert('分享更新成功');
             toggleShareEdit(false);
-            viewShareDetail(currentShareDetail.id); // 刷新详情
-            renderSharesTab(); // 刷新列表
+            await viewShareDetail(currentShareDetail.id); // 刷新详情
+            await renderSharesTab(); // 刷新列表
         } catch (e) {
-            alert('更新失败：' + e.message);
+            console.error('更新失败:', e);
+            alert('更新失败：' + (e.message || '参数无效，请检查输入'));
         }
     }
     
