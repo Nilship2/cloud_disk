@@ -855,7 +855,7 @@
     <!-- 动态内容区域 -->
     <div id="contentArea"></div>
 
-        <!-- 批量操作栏（确保有移动按钮） -->
+     <!-- 批量操作栏 -->
     <div class="batch-bar" id="batchBar" style="display: none;">
         <span id="selectedCount">已选择 0 项</span>
         <div class="batch-actions">
@@ -1136,6 +1136,9 @@
         showLoggedOutUI();
         loadTabContent('files');
     }
+    
+    // 页面加载时绑定一次
+    setTimeout(bindBatchButtons, 1000);
 
     // 导航点击
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -1351,12 +1354,14 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
         
         contentArea.innerHTML = html;
 
-        // 替换原来的上传按钮事件
-document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
+        // 绑定上传和新建文件夹按钮
+        document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
         document.getElementById('createFolderBtn').addEventListener('click', () => openModal('folderModal'));
 
+        // 为文件项添加双击事件
         document.querySelectorAll('.file-item').forEach(item => {
             item.addEventListener('dblclick', (e) => {
+                if (e.target.classList.contains('file-checkbox')) return;
                 if (item.dataset.isdir === 'true') {
                     currentParentId = item.dataset.id;
                     renderFilesTab();
@@ -1364,12 +1369,16 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
             });
         });
 
+        // 为面包屑导航添加事件
         document.querySelectorAll('.path-item').forEach(item => {
             item.addEventListener('click', () => {
                 currentParentId = '';
                 renderFilesTab();
             });
         });
+
+        // ===== 重新绑定批量操作按钮事件 =====
+        bindBatchButtons();
     }
     // ================== 新增：文件夹进入函数 ==================
     function enterFolder(folderId) {
@@ -1501,6 +1510,72 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
         // 计算文件哈希（使用多种方法，兼容所有浏览器）
         // ================== 第一批次：分享功能完善 ==================
     
+        // ================== 批量操作按钮事件绑定 ==================
+    function bindBatchButtons() {
+        console.log('重新绑定批量操作按钮');
+        
+        // 移动按钮
+        const moveBtn = document.getElementById('batchMoveBtn');
+        if (moveBtn) {
+            // 移除之前可能存在的监听器（避免重复绑定）
+            moveBtn.replaceWith(moveBtn.cloneNode(true));
+            const newMoveBtn = document.getElementById('batchMoveBtn');
+            newMoveBtn.addEventListener('click', function() {
+                console.log('移动按钮被点击');
+                if (selectedItems.size === 0) {
+                    alert('请先选择文件');
+                    return;
+                }
+                openMoveDialog();
+            });
+        }
+        
+        // 分享按钮
+        const shareBtn = document.getElementById('batchShareBtn');
+        if (shareBtn) {
+            shareBtn.replaceWith(shareBtn.cloneNode(true));
+            const newShareBtn = document.getElementById('batchShareBtn');
+            newShareBtn.addEventListener('click', function() {
+                console.log('分享按钮被点击');
+                if (selectedItems.size === 0) {
+                    alert('请先选择文件');
+                    return;
+                }
+                openModal('shareModal');
+            });
+        }
+        
+        // 收藏按钮
+        const favoriteBtn = document.getElementById('batchFavoriteBtn');
+        if (favoriteBtn) {
+            favoriteBtn.replaceWith(favoriteBtn.cloneNode(true));
+            const newFavoriteBtn = document.getElementById('batchFavoriteBtn');
+            newFavoriteBtn.addEventListener('click', function() {
+                console.log('收藏按钮被点击');
+                if (selectedItems.size === 0) {
+                    alert('请先选择文件');
+                    return;
+                }
+                addFavorite();
+            });
+        }
+        
+        // 删除按钮
+        const deleteBtn = document.getElementById('batchDeleteBtn');
+        if (deleteBtn) {
+            deleteBtn.replaceWith(deleteBtn.cloneNode(true));
+            const newDeleteBtn = document.getElementById('batchDeleteBtn');
+            newDeleteBtn.addEventListener('click', function() {
+                console.log('删除按钮被点击');
+                if (selectedItems.size === 0) {
+                    alert('请先选择文件');
+                    return;
+                }
+                deleteFiles();
+            });
+        }
+    }
+
     let currentShareDetail = null;
     
     // 查看分享详情
@@ -2247,11 +2322,18 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
         return icons[ext?.toLowerCase()] || '📄';
     }
 
-    function toggleSelect(id) {
+        function toggleSelect(id) {
         if (selectedItems.has(id)) selectedItems.delete(id);
         else selectedItems.add(id);
         document.getElementById('selectedCount').innerText = `已选择 ${selectedItems.size} 项`;
-        batchBar.style.display = selectedItems.size > 0 ? 'flex' : 'none';
+        
+        if (selectedItems.size > 0) {
+            batchBar.style.display = 'flex';
+            // 每次显示批量操作栏时都重新绑定按钮
+            bindBatchButtons();
+        } else {
+            batchBar.style.display = 'none';
+        }
     }
 
     async function uploadFile() {
