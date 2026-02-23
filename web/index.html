@@ -929,8 +929,8 @@
         <div class="modal-content">
             <h2>创建分享</h2>
             <input type="password" placeholder="访问密码（可选）" id="sharePassword">
-            <input type="number" placeholder="过期天数（默认7天）" id="shareExpireDays" value="7">
-            <input type="number" placeholder="最大下载次数（0无限制）" id="shareMaxDownloads" value="0">
+                        <input type="number" placeholder="过期天数（默认7天，0表示永久）" id="shareExpireDays" value="7" min="0" max="365000" step="1">
+            <input type="number" placeholder="最大下载次数（0表示无限制）" id="shareMaxDownloads" value="0" min="0" max="999999" step="1">
             <div class="modal-actions">
                 <button class="modal-btn-secondary" onclick="closeModal('shareModal')">取消</button>
                 <button class="modal-btn-primary" id="createShareBtn">创建分享</button>
@@ -1092,13 +1092,13 @@
                     <label>访问密码</label>
                     <input type="text" id="editSharePassword" placeholder="留空表示无密码">
                 </div>
-                <div class="edit-field">
-                    <label>过期天数（0表示不过期）</label>
-                    <input type="number" id="editShareExpireDays" min="0" max="30">
+                                <div class="edit-field">
+                    <label>过期天数（0表示永久）</label>
+                    <input type="number" id="editShareExpireDays" min="0" max="3650" step="1">
                 </div>
                 <div class="edit-field">
                     <label>最大下载次数（0表示无限制）</label>
-                    <input type="number" id="editShareMaxDownloads" min="0" max="1000">
+                    <input type="number" id="editShareMaxDownloads" min="0" max="999999" step="1">
                 </div>
                 <div class="edit-actions">
                     <button class="edit-save-btn" id="saveShareEditBtn" onclick="saveShareEditAlt()">保存修改</button>
@@ -1114,7 +1114,9 @@
         </div>
     </div>
 <script>
-    const API_BASE = '';
+        // 配置 - 使用你的服务器IP
+    const API_BASE = '';  // 留空表示同域名
+    const SITE_URL = 'http://124.221.102.153'; // 你的服务器IP
     let TOKEN = localStorage.getItem('token') || null;
     let currentUser = null;
     let currentTab = 'files';
@@ -1407,7 +1409,7 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
                         <div class="share-item">
                             <div class="share-info">
                                 <span>📄 ${share.filename}</span>
-                                <span class="share-link">${share.share_link}</span>
+                                <span class="share-link">${SITE_URL}/s/${share.token}</span>
                                 <span>下载 ${share.download_count}/${share.max_downloads || '∞'}</span>
                                 <span class="status-badge ${statusClass}">${statusText}</span>
                             </div>
@@ -1514,23 +1516,7 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
     function bindBatchButtons() {
         console.log('重新绑定批量操作按钮');
         
-        // 移动按钮
-        const moveBtn = document.getElementById('batchMoveBtn');
-        if (moveBtn) {
-            // 移除之前可能存在的监听器（避免重复绑定）
-            moveBtn.replaceWith(moveBtn.cloneNode(true));
-            const newMoveBtn = document.getElementById('batchMoveBtn');
-            newMoveBtn.addEventListener('click', function() {
-                console.log('移动按钮被点击');
-                if (selectedItems.size === 0) {
-                    alert('请先选择文件');
-                    return;
-                }
-                openMoveDialog();
-            });
-        }
-        
-        // 分享按钮
+                // 分享按钮
         const shareBtn = document.getElementById('batchShareBtn');
         if (shareBtn) {
             shareBtn.replaceWith(shareBtn.cloneNode(true));
@@ -1541,7 +1527,22 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
                     alert('请先选择文件');
                     return;
                 }
-                openModal('shareModal');
+                openShareModal(); // 调用新函数
+            });
+        }
+        
+        // 移动按钮
+        const moveBtn = document.getElementById('batchMoveBtn');
+        if (moveBtn) {
+            moveBtn.replaceWith(moveBtn.cloneNode(true));
+            const newMoveBtn = document.getElementById('batchMoveBtn');
+            newMoveBtn.addEventListener('click', function() {
+                console.log('移动按钮被点击');
+                if (selectedItems.size === 0) {
+                    alert('请先选择文件');
+                    return;
+                }
+                openMoveDialog(); // 调用新函数
             });
         }
         
@@ -1585,22 +1586,32 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
             const share = res.data;
             currentShareDetail = share;
             
-            // 填充基本信息
+                        // 填充基本信息
             document.getElementById('shareDetailFileName').textContent = share.filename || '文件分享';
             document.getElementById('shareDetailFileInfo').textContent = `${share.file_size_text} · ${share.download_count}次下载`;
-            document.getElementById('shareDetailLink').textContent = share.share_link;
+            document.getElementById('shareDetailLink').textContent = SITE_URL + '/s/' + share.token;
             document.getElementById('shareDownloadCount').textContent = share.download_count;
-            document.getElementById('shareMaxDownloads').textContent = share.max_downloads || '∞';
             
-            // 计算剩余天数
+            // 显示下载限制
+            if (share.max_downloads && share.max_downloads > 0) {
+                document.getElementById('shareMaxDownloads').textContent = share.max_downloads;
+            } else {
+                document.getElementById('shareMaxDownloads').textContent = '∞';
+            }
+            
+            // 显示过期时间
+            let expireText = '永久有效';
             if (share.expire_time) {
                 const expireDate = new Date(share.expire_time);
                 const now = new Date();
                 const daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
-                document.getElementById('shareExpireDays').textContent = daysLeft > 0 ? `${daysLeft}天` : '已过期';
-            } else {
-                document.getElementById('shareExpireDays').textContent = '永久';
+                if (daysLeft > 0) {
+                    expireText = `${daysLeft}天后过期 (${expireDate.toLocaleDateString()})`;
+                } else {
+                    expireText = '已过期';
+                }
             }
+            document.getElementById('shareExpireDays').textContent = expireText;
             
                         // 填充编辑表单
             document.getElementById('editSharePassword').value = ''; // 密码不回显，留空表示不修改
@@ -1613,7 +1624,7 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
                 const daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
                 document.getElementById('editShareExpireDays').value = daysLeft > 0 ? daysLeft : 7;
             } else {
-                document.getElementById('editShareExpireDays').value = 0; // 0表示永久
+                document.getElementById('editShareExpireDays').value = 0; // 空着永久
             }
             
             // 设置最大下载次数
@@ -1669,22 +1680,19 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
         }
         // 注意：如果要清除密码，不能发送 password: ''，应该不发送 password 字段
         
-        // 2. 过期天数处理 - 只有当输入了有效值且不为0才发送
+                // 2. 过期天数处理 - 任何值都发送（包括0）
         if (expireDays !== undefined && expireDays !== null && expireDays !== '') {
             const days = parseInt(expireDays);
-            if (!isNaN(days) && days > 0) {
-                // 只有大于0的才发送
+            if (!isNaN(days)) {
                 updateData.expire_days = days;
                 console.log('设置过期天数:', days);
             }
-            // 如果要设置永久有效（0），不发送 expire_days 字段
         }
         
-        // 3. 最大下载次数处理 - 任何有效值都发送（包括0）
+        // 3. 最大下载次数处理 - 任何值都发送（包括0）
         if (maxDownloads !== undefined && maxDownloads !== null && maxDownloads !== '') {
             const downloads = parseInt(maxDownloads);
             if (!isNaN(downloads)) {
-                // 0表示无限制，也要发送
                 updateData.max_downloads = downloads;
                 console.log('设置最大下载次数:', downloads);
             }
@@ -1733,7 +1741,7 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
             alert('更新失败：网络错误');
         }
     }
-    
+
         // 清除密码的专门函数
     async function clearSharePassword() {
         if (!currentShareDetail) return;
@@ -1801,6 +1809,99 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
         window.open(currentShareDetail.share_link + '/download', '_blank');
     }
     
+        // ================== 打开分享模态框并绑定按钮 ==================
+    function openShareModal() {
+        console.log('打开分享模态框');
+        
+        // 检查是否有选中的文件
+        if (selectedItems.size === 0) {
+            alert('请先选择文件');
+            return;
+        }
+        
+        // 清空表单
+        document.getElementById('sharePassword').value = '';
+        document.getElementById('shareExpireDays').value = '7';
+        document.getElementById('shareMaxDownloads').value = '0';
+        
+        // 打开模态框（使用已有的openModal函数）
+        openModal('shareModal');
+        
+        // 延迟一点绑定按钮，确保DOM已加载
+        setTimeout(bindCreateShareButton, 100);
+    }
+        // ================== 绑定创建分享按钮 ==================
+    function bindCreateShareButton() {
+        console.log('绑定创建分享按钮');
+        const createBtn = document.getElementById('createShareBtn');
+        if (!createBtn) {
+            console.log('找不到创建分享按钮');
+            return;
+        }
+        
+        // 移除旧的事件监听器（简单方法：替换按钮）
+        const newBtn = createBtn.cloneNode(true);
+        createBtn.parentNode.replaceChild(newBtn, createBtn);
+        
+        // 绑定新的事件
+        newBtn.addEventListener('click', async function() {
+            console.log('创建分享按钮被点击');
+            
+            const password = document.getElementById('sharePassword').value;
+            const expireDays = document.getElementById('shareExpireDays').value;
+            const maxDownloads = document.getElementById('shareMaxDownloads').value;
+            
+            // 验证
+            if (!expireDays || expireDays < 1) {
+                alert('过期天数必须大于0');
+                return;
+            }
+            
+            // 显示加载状态
+            newBtn.textContent = '创建中...';
+            newBtn.disabled = true;
+            
+            try {
+                const fileIds = Array.from(selectedItems);
+                let successCount = 0;
+                
+                for (const fileId of fileIds) {
+                    const shareData = {
+                        file_id: fileId,
+                        expire_days: parseInt(expireDays) || 7,  // 默认7天
+                        max_downloads: parseInt(maxDownloads) || 0  // 0表示无限制
+                    };
+                    
+                    // 密码处理：只有输入了非空密码才发送
+                    if (password && password.trim() !== '') {
+                        shareData.password = password.trim();
+                    }
+                    // 注意：如果不发送 password 字段，后端不会修改密码
+                    
+                    await apiCall('/shares', {
+                        method: 'POST',
+                        body: JSON.stringify(shareData)
+                    });
+                    successCount++;
+                }
+                
+                alert(`成功创建 ${successCount} 个分享`);
+                closeModal('shareModal');
+                selectedItems.clear();
+                document.getElementById('batchBar').style.display = 'none';
+                
+                // 刷新文件列表和分享列表
+                renderFilesTab();
+                renderSharesTab();
+                
+            } catch (e) {
+                alert('创建分享失败：' + e.message);
+            } finally {
+                newBtn.textContent = '创建分享';
+                newBtn.disabled = false;
+            }
+        });
+    }
     // 测试分享链接访问（新窗口打开）
     function openShareLink(token) {
         window.open(`/s/${token}`, '_blank');
@@ -2190,15 +2291,87 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
     let folderStructure = [];
 
     // 打开移动对话框
+        // ================== 打开移动对话框 ==================
     async function openMoveDialog() {
+        console.log('打开移动对话框');
+        
         moveSelectedItems = Array.from(selectedItems);
         if (moveSelectedItems.length === 0) return;
         
         selectedFolderId = null;
-        await loadFolderStructure();
+        
+        // 显示加载状态
+        const folderTree = document.getElementById('folderTree');
+        folderTree.innerHTML = '<div style="text-align:center;padding:20px">加载文件夹中...</div>';
+        
+        // 打开模态框
         openModal('moveModal');
+        
+        // 加载文件夹结构
+        await loadFolderStructure();
+        
+        // 绑定移动到此处按钮
+        setTimeout(bindMoveButton, 100);
     }
 
+        // ================== 绑定移动到此处按钮 ==================
+    function bindMoveButton() {
+        console.log('绑定移动到此处按钮');
+        const moveBtn = document.getElementById('confirmMoveBtn');
+        if (!moveBtn) {
+            console.log('找不到移动到此处按钮');
+            return;
+        }
+        
+        // 移除旧的事件监听器
+        const newBtn = moveBtn.cloneNode(true);
+        moveBtn.parentNode.replaceChild(newBtn, moveBtn);
+        
+        // 绑定新的事件
+        newBtn.addEventListener('click', async function() {
+            console.log('移动到此处按钮被点击');
+            
+            if (moveSelectedItems.length === 0) {
+                alert('没有要移动的文件');
+                closeModal('moveModal');
+                return;
+            }
+            
+            if (selectedFolderId === null) {
+                alert('请选择目标文件夹');
+                return;
+            }
+            
+            // 显示加载状态
+            newBtn.textContent = '移动中...';
+            newBtn.disabled = true;
+            
+            try {
+                for (const fileId of moveSelectedItems) {
+                    await apiCall(`/files/${fileId}/move`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ 
+                            target_parent_id: selectedFolderId 
+                        })
+                    });
+                }
+                
+                alert(`成功移动 ${moveSelectedItems.length} 个文件`);
+                closeModal('moveModal');
+                selectedItems.clear();
+                document.getElementById('batchBar').style.display = 'none';
+                
+                // 刷新文件列表
+                renderFilesTab();
+                
+            } catch (e) {
+                alert('移动失败：' + e.message);
+            } finally {
+                newBtn.textContent = '移动到此处';
+                newBtn.disabled = false;
+            }
+        });
+    }
     // 加载文件夹结构
     async function loadFolderStructure(parentId = '') {
         try {
@@ -2503,8 +2676,47 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
         }
     }
 
+        // 复制到剪贴板
     function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => alert('链接已复制'));
+        console.log('复制到剪贴板:', text);
+        
+        // 方法1：使用现代 Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('链接已复制到剪贴板');
+            }).catch(err => {
+                console.error('Clipboard API 失败:', err);
+                fallbackCopy(text);
+            });
+        } else {
+            // 方法2：使用传统的 execCommand
+            fallbackCopy(text);
+        }
+    }
+    
+    // 备用复制方法
+    function fallbackCopy(text) {
+        console.log('使用备用复制方法');
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                alert('链接已复制到剪贴板');
+            } else {
+                alert('复制失败，请手动复制');
+            }
+        } catch (err) {
+            console.error('复制失败:', err);
+            alert('复制失败，请手动复制');
+        }
+        
+        document.body.removeChild(textarea);
     }
 
     // ================== 模态框 ==================
@@ -2539,6 +2751,10 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
     window.deletePermanently = deletePermanently;
     window.cleanTrash = cleanTrash;
     window.copyToClipboard = copyToClipboard;
+    window.openShareModal = openShareModal;
+    window.openMoveDialog = openMoveDialog;
+    window.copyToClipboard = copyToClipboard;
+    window.fallbackCopy = fallbackCopy;
 
     // 登录注册事件
     document.getElementById('showLoginBtn').addEventListener('click', () => openModal('loginModal'));
