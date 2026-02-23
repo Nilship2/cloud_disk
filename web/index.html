@@ -1101,7 +1101,7 @@
                     <input type="number" id="editShareMaxDownloads" min="0" max="1000">
                 </div>
                 <div class="edit-actions">
-                    <button class="edit-save-btn" id="saveShareEditBtn">保存修改</button>
+                    <button class="edit-save-btn" id="saveShareEditBtn" onclick="saveShareEditAlt()">保存修改</button>
                     <button class="edit-cancel-btn" id="cancelShareEditBtn" onclick="toggleShareEdit(false)">取消</button>
                 </div>
             </div>
@@ -1558,47 +1558,77 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
     // 保存分享编辑
         // 保存分享编辑
         // 保存分享编辑
-    async function saveShareEdit() {
-        if (!currentShareDetail) return;
+        // 备选方案：使用 URLSearchParams 格式
+        // 测试用的简化版本
+        // 完整的保存编辑函数
+        // 完整的保存编辑函数 - 发送所有字段
+        // 根据后端代码精确实现的保存编辑函数
+        // 根据测试结果精确修复的保存编辑函数
+    async function saveShareEditAlt() {
+        console.log('saveShareEditAlt 函数被调用');
+        
+        if (!currentShareDetail) {
+            console.error('currentShareDetail 为空');
+            alert('错误：没有当前分享数据');
+            return;
+        }
+        
+        console.log('当前分享ID:', currentShareDetail.id);
+        console.log('当前分享数据:', currentShareDetail);
         
         // 获取表单值
         const password = document.getElementById('editSharePassword').value;
         const expireDays = document.getElementById('editShareExpireDays').value;
         const maxDownloads = document.getElementById('editShareMaxDownloads').value;
         
-        // 构建完整的更新数据（包含所有字段，即使是原来的值）
+        console.log('表单原始值:', { password, expireDays, maxDownloads });
+        
+        // 构建更新数据
         const updateData = {};
         
-        // 密码处理：如果输入了新密码就更新，否则发送 undefined（后端会忽略）
-        if (password && password.trim() !== '') {
+        // 1. 密码字段处理 - 只有当输入了新密码才发送
+        if (password !== undefined && password !== null && password.trim() !== '') {
+            // 有输入新密码才发送
             updateData.password = password.trim();
-        } else {
-            // 如果密码框为空，表示要清除密码
-            updateData.password = null;
+            console.log('设置新密码:', password.trim());
+        }
+        // 注意：如果要清除密码，不能发送 password: ''，应该不发送 password 字段
+        
+        // 2. 过期天数处理 - 只有当输入了有效值且不为0才发送
+        if (expireDays !== undefined && expireDays !== null && expireDays !== '') {
+            const days = parseInt(expireDays);
+            if (!isNaN(days) && days > 0) {
+                // 只有大于0的才发送
+                updateData.expire_days = days;
+                console.log('设置过期天数:', days);
+            }
+            // 如果要设置永久有效（0），不发送 expire_days 字段
         }
         
-        // 过期天数处理
-        if (expireDays !== '' && !isNaN(parseInt(expireDays))) {
-            updateData.expire_days = parseInt(expireDays);
-        } else {
-            // 如果未输入，保持原值
-            updateData.expire_days = currentShareDetail.expire_time ? 7 : 0;
+        // 3. 最大下载次数处理 - 任何有效值都发送（包括0）
+        if (maxDownloads !== undefined && maxDownloads !== null && maxDownloads !== '') {
+            const downloads = parseInt(maxDownloads);
+            if (!isNaN(downloads)) {
+                // 0表示无限制，也要发送
+                updateData.max_downloads = downloads;
+                console.log('设置最大下载次数:', downloads);
+            }
         }
         
-        // 最大下载次数处理
-        if (maxDownloads !== '' && !isNaN(parseInt(maxDownloads))) {
-            updateData.max_downloads = parseInt(maxDownloads);
-        } else {
-            updateData.max_downloads = currentShareDetail.max_downloads || 0;
+        console.log('最终发送数据:', updateData);
+        
+        // 如果没有要更新的字段
+        if (Object.keys(updateData).length === 0) {
+            alert('没有要修改的内容');
+            toggleShareEdit(false);
+            return;
         }
-        
-        // 添加 status 字段（保持原状态）
-        updateData.status = currentShareDetail.status;
-        
-        console.log('发送更新数据:', JSON.stringify(updateData));
         
         try {
-            const res = await fetch(API_BASE + `/api/v1/shares/${currentShareDetail.id}`, {
+            const url = API_BASE + `/api/v1/shares/${currentShareDetail.id}`;
+            console.log('请求URL:', url);
+            
+            const res = await fetch(url, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1607,23 +1637,81 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
                 body: JSON.stringify(updateData)
             });
             
+            console.log('响应状态:', res.status);
+            
             const data = await res.json();
+            console.log('响应数据:', data);
             
             if (res.ok && data.code === 0) {
                 alert('分享更新成功');
                 toggleShareEdit(false);
-                await viewShareDetail(currentShareDetail.id); // 刷新详情
-                await renderSharesTab(); // 刷新列表
+                // 刷新详情和列表
+                setTimeout(() => {
+                    viewShareDetail(currentShareDetail.id);
+                    renderSharesTab();
+                }, 500);
             } else {
-                console.error('后端返回错误:', data);
                 alert('更新失败：' + (data.message || '未知错误'));
             }
         } catch (e) {
-            console.error('请求失败:', e);
+            console.error('请求异常:', e);
             alert('更新失败：网络错误');
         }
     }
     
+        // 清除密码的专门函数
+    async function clearSharePassword() {
+        if (!currentShareDetail) return;
+        
+        if (!confirm('确定清除访问密码吗？')) return;
+        
+        try {
+            // 发送密码为空字符串
+            const res = await fetch(API_BASE + `/api/v1/shares/${currentShareDetail.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + TOKEN
+                },
+                body: JSON.stringify({ password: '' })
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok && data.code === 0) {
+                alert('密码已清除');
+                viewShareDetail(currentShareDetail.id);
+            }
+        } catch (e) {
+            alert('操作失败');
+        }
+    }
+    
+    // 设置永久有效的专门函数
+    async function setSharePermanent() {
+        if (!currentShareDetail) return;
+        
+        try {
+            const res = await fetch(API_BASE + `/api/v1/shares/${currentShareDetail.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + TOKEN
+                },
+                body: JSON.stringify({ expire_days: 0 })
+            });
+            
+            const data = await res.json();
+            
+            if (res.ok && data.code === 0) {
+                alert('已设置为永久有效');
+                viewShareDetail(currentShareDetail.id);
+            }
+        } catch (e) {
+            alert('操作失败');
+        }
+    }
+
     // 复制分享链接
     function copyShareLink() {
         const link = document.getElementById('shareDetailLink').textContent;
@@ -2357,6 +2445,7 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
     window.viewShareDetail = viewShareDetail;
     window.toggleShareEdit = toggleShareEdit;
     window.saveShareEdit = saveShareEdit;
+    window.saveShareEditAlt = saveShareEditAlt;
     window.copyShareLink = copyShareLink;
     window.downloadFromShare = downloadFromShare;
     window.openShareLink = openShareLink;
@@ -2415,7 +2504,7 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
     document.getElementById('updateProfileBtn').addEventListener('click', updateProfile);
     document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
 // 分享编辑按钮事件
-    document.getElementById('saveShareEditBtn')?.addEventListener('click', saveShareEdit);
+    document.getElementById('saveShareEditBtn')?.addEventListener('click', saveShareEditAlt);
     document.getElementById('cancelShareEditBtn')?.addEventListener('click', () => toggleShareEdit(false));
     // 批量操作按钮
     document.getElementById('batchMoveBtn')?.addEventListener('click', openMoveDialog);
@@ -2426,6 +2515,40 @@ document.getElementById('uploadBtn').addEventListener('click', openUploadModal);
     document.getElementById('createShareBtn')?.addEventListener('click', createShare);
     document.getElementById('createFolderBtn')?.addEventListener('click', createFolder);
 
+        // ================== 事件监听初始化 ==================
+    
+    // 确保在 DOM 加载完成后绑定事件
+    document.addEventListener('DOMContentLoaded', function() {
+        initEventListeners();
+    });
+    
+    // 也可以直接绑定（如果脚本在 body 底部）
+    function initEventListeners() {
+        console.log('初始化事件监听器...');
+        
+        // 分享编辑按钮
+        const saveBtn = document.getElementById('saveShareEditBtn');
+        if (saveBtn) {
+            console.log('找到保存按钮，绑定事件');
+            saveBtn.addEventListener('click', function(e) {
+                console.log('保存按钮被点击');
+                saveShareEditAlt();
+            });
+        } else {
+            console.log('未找到保存按钮');
+        }
+        
+        // 取消编辑按钮
+        const cancelBtn = document.getElementById('cancelShareEditBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                toggleShareEdit(false);
+            });
+        }
+    }
+    
+    // 立即调用初始化
+    setTimeout(initEventListeners, 500); // 延迟一点确保 DOM 加载完成
     // 点击模态框背景关闭
     document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', (e) => {
