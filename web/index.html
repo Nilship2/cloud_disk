@@ -1416,6 +1416,7 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
                             <div>
                                 <button class="copy-btn" onclick="copyToClipboard('${share.share_link}')">复制</button>
                                 <button class="copy-btn" onclick="viewShareDetail(${share.id})">详情</button>
+                                <button class="copy-btn" onclick="downloadFromShareLink('${share.token}')">下载</button>
                                 <button class="delete-btn" onclick="cancelShare(${share.id})">取消</button>
                             </div>
                         </div>
@@ -1580,16 +1581,21 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
     let currentShareDetail = null;
     
     // 查看分享详情
+        // 查看分享详情
     async function viewShareDetail(shareId) {
         try {
             const res = await apiCall(`/shares/${shareId}`);
             const share = res.data;
             currentShareDetail = share;
             
-                        // 填充基本信息
+            console.log('分享详情数据:', share);
+            
+            // 填充基本信息
             document.getElementById('shareDetailFileName').textContent = share.filename || '文件分享';
             document.getElementById('shareDetailFileInfo').textContent = `${share.file_size_text} · ${share.download_count}次下载`;
             document.getElementById('shareDetailLink').textContent = SITE_URL + '/s/' + share.token;
+            
+            // 显示下载次数
             document.getElementById('shareDownloadCount').textContent = share.download_count;
             
             // 显示下载限制
@@ -1601,36 +1607,35 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
             
             // 显示过期时间
             let expireText = '永久有效';
+            let expireDaysValue = 0;
+            
             if (share.expire_time) {
                 const expireDate = new Date(share.expire_time);
                 const now = new Date();
                 const daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
+                
                 if (daysLeft > 0) {
                     expireText = `${daysLeft}天后过期 (${expireDate.toLocaleDateString()})`;
+                    expireDaysValue = daysLeft;
                 } else {
                     expireText = '已过期';
                 }
             }
-            document.getElementById('shareExpireDays').textContent = expireText;
             
-                        // 填充编辑表单
-            document.getElementById('editSharePassword').value = ''; // 密码不回显，留空表示不修改
-            
-            // 设置过期天数
-            if (share.expire_time) {
-                // 如果有过期时间，计算剩余天数
-                const expireDate = new Date(share.expire_time);
-                const now = new Date();
-                const daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
-                document.getElementById('editShareExpireDays').value = daysLeft > 0 ? daysLeft : 7;
-            } else {
-                document.getElementById('editShareExpireDays').value = 0; // 空着永久
+            // 更新过期时间显示
+            const expireElement = document.getElementById('shareExpireDays');
+            if (expireElement) {
+                expireElement.textContent = expireText;
             }
             
-            // 设置最大下载次数
+            // 填充编辑表单
+            document.getElementById('editSharePassword').value = '';
+            document.getElementById('editShareExpireDays').value = expireDaysValue;
             document.getElementById('editShareMaxDownloads').value = share.max_downloads || 0;
+            
             openModal('shareDetailModal');
         } catch (e) {
+            console.error('获取分享详情失败:', e);
             alert('获取分享详情失败：' + e.message);
         }
     }
@@ -1669,18 +1674,16 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
         
         console.log('表单原始值:', { password, expireDays, maxDownloads });
         
-        // 构建更新数据
+                // 构建更新数据
         const updateData = {};
         
-        // 1. 密码字段处理 - 只有当输入了新密码才发送
+        // 1. 密码字段处理 - 只有输入了新密码才发送
         if (password !== undefined && password !== null && password.trim() !== '') {
-            // 有输入新密码才发送
             updateData.password = password.trim();
             console.log('设置新密码:', password.trim());
         }
-        // 注意：如果要清除密码，不能发送 password: ''，应该不发送 password 字段
         
-                // 2. 过期天数处理 - 任何值都发送（包括0）
+        // 2. 过期天数处理 - 0也表示有效值，需要发送
         if (expireDays !== undefined && expireDays !== null && expireDays !== '') {
             const days = parseInt(expireDays);
             if (!isNaN(days)) {
@@ -1689,7 +1692,7 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
             }
         }
         
-        // 3. 最大下载次数处理 - 任何值都发送（包括0）
+        // 3. 最大下载次数处理 - 0也表示有效值，需要发送
         if (maxDownloads !== undefined && maxDownloads !== null && maxDownloads !== '') {
             const downloads = parseInt(maxDownloads);
             if (!isNaN(downloads)) {
@@ -1866,13 +1869,28 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
                 let successCount = 0;
                 
                 for (const fileId of fileIds) {
+                                        // 构建分享数据
                     const shareData = {
-                        file_id: fileId,
-                        expire_days: parseInt(expireDays) || 7,  // 默认7天
-                        max_downloads: parseInt(maxDownloads) || 0  // 0表示无限制
+                        file_id: fileId
                     };
                     
-                    // 密码处理：只有输入了非空密码才发送
+                    // 过期天数：0表示永久（后端特殊处理）
+                    if (expireDays !== '' && expireDays !== null) {
+                        const days = parseInt(expireDays);
+                        if (!isNaN(days)) {
+                            shareData.expire_days = days;
+                        }
+                    }
+                    
+                    // 下载次数：0表示无限制
+                    if (maxDownloads !== '' && maxDownloads !== null) {
+                        const downloads = parseInt(maxDownloads);
+                        if (!isNaN(downloads)) {
+                            shareData.max_downloads = downloads;
+                        }
+                    }
+                    
+                    // 密码处理
                     if (password && password.trim() !== '') {
                         shareData.password = password.trim();
                     }
@@ -1885,12 +1903,16 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
                     successCount++;
                 }
                 
+                // 成功后关闭
                 alert(`成功创建 ${successCount} 个分享`);
                 closeModal('shareModal');
-                selectedItems.clear();
-                document.getElementById('batchBar').style.display = 'none';
                 
-                // 刷新文件列表和分享列表
+                // 清空选择
+                selectedItems.clear();
+                const batchBar = document.getElementById('batchBar');
+                if (batchBar) batchBar.style.display = 'none';
+                
+                // 刷新列表
                 renderFilesTab();
                 renderSharesTab();
                 
@@ -1901,6 +1923,19 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
                 newBtn.disabled = false;
             }
         });
+    }
+        // ================== 处理分享链接访问 ==================
+    function openShareLink(token) {
+        const shareUrl = `${SITE_URL}/s/${token}`;
+        console.log('打开分享链接:', shareUrl);
+        window.open(shareUrl, '_blank');
+    }
+    
+    // 从分享链接下载文件
+    function downloadFromShareLink(token) {
+        const downloadUrl = `${SITE_URL}/s/${token}/download?token=${TOKEN}`;
+        console.log('下载分享文件:', downloadUrl);
+        window.open(downloadUrl, '_blank');
     }
     // 测试分享链接访问（新窗口打开）
     function openShareLink(token) {
@@ -2192,25 +2227,20 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
         }
     }
     // 下载单个文件
+        // 下载单个文件
     async function downloadFile(fileId, filename) {
+        console.log('下载文件:', fileId, filename);
+        
         try {
-            // 先获取文件详情（获取下载URL）
-            const res = await apiCall(`/files/${fileId}`);
-            const file = res.data;
+            // 构建正确的下载URL
+            const downloadUrl = `${SITE_URL}/api/v1/files/${fileId}/download`;
+            console.log('下载URL:', downloadUrl);
             
-            if (file.url) {
-                // 创建隐藏的a标签下载
-                const a = document.createElement('a');
-                a.href = file.url;
-                a.download = file.filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            } else {
-                // 如果没有直接URL，用API下载
-                window.open(API_BASE + `/api/v1/files/${fileId}/download`, '_blank');
-            }
+            // 在新窗口打开下载链接（带token）
+            window.open(downloadUrl + '?token=' + TOKEN, '_blank');
+            
         } catch (e) {
+            console.error('下载失败:', e);
             alert('下载失败：' + e.message);
         }
     }
@@ -2239,7 +2269,7 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
             // 下载按钮
             downloadBtn.onclick = () => {
                 downloadFile(file.id, file.filename);
-                closeModal('fileDetailModal');
+                // 不关闭模态框，让用户看到下载开始
             };
             
             // 分享按钮（如果文件不是文件夹）
@@ -2738,7 +2768,7 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
     window.enterFolder = enterFolder;
     window.viewShareDetail = viewShareDetail;
     window.toggleShareEdit = toggleShareEdit;
-    window.saveShareEdit = saveShareEdit;
+    //window.saveShareEdit = saveShareEdit;
     window.saveShareEditAlt = saveShareEditAlt;
     window.copyShareLink = copyShareLink;
     window.downloadFromShare = downloadFromShare;
@@ -2755,6 +2785,9 @@ document.getElementById('uploadArea').addEventListener('drop', handleDrop);
     window.openMoveDialog = openMoveDialog;
     window.copyToClipboard = copyToClipboard;
     window.fallbackCopy = fallbackCopy;
+    window.downloadFile = downloadFile;
+    window.openShareLink = openShareLink;
+    window.downloadFromShareLink = downloadFromShareLink;
 
     // 登录注册事件
     document.getElementById('showLoginBtn').addEventListener('click', () => openModal('loginModal'));
