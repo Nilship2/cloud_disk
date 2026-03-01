@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -39,14 +40,63 @@ import (
 // @name Authorization
 
 func main() {
-	// 1. 根据环境变量决定配置文件
-	configFile := "config.dev.yaml" // 默认开发配置
-	if env := os.Getenv("GO_ENV"); env == "production" {
-		configFile = "config.yaml" // 生产环境使用 config.yaml
+	// 1. 确定环境
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "development"
 	}
+
+	// 2. 根据环境选择配置文件
+	configFile := "config.dev.yaml"
+	if env == "production" {
+		configFile = "config.prod.yaml"
+	} else if env == "test" {
+		configFile = "config.test.yaml"
+	}
+
+	log.Printf("Running in %s mode, using config file: %s", env, configFile)
+
+	// 3. 加载配置
 	cfg, err := config.Load(configFile)
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	// 4. 从环境变量覆盖数据库配置（Docker部署时使用）
+	if host := os.Getenv("DB_HOST"); host != "" {
+		cfg.Database.Host = host
+		log.Printf("Using DB_HOST from environment: %s", host)
+	}
+	if portStr := os.Getenv("DB_PORT"); portStr != "" {
+		if port, err := strconv.Atoi(portStr); err == nil {
+			cfg.Database.Port = port
+			log.Printf("Using DB_PORT from environment: %d", port)
+		}
+	}
+	if user := os.Getenv("DB_USER"); user != "" {
+		cfg.Database.Username = user
+		log.Printf("Using DB_USER from environment: %s", user)
+	}
+	if password := os.Getenv("DB_PASSWORD"); password != "" {
+		cfg.Database.Password = password
+		log.Printf("Using DB_PASSWORD from environment")
+	}
+	if name := os.Getenv("DB_NAME"); name != "" {
+		cfg.Database.Database = name
+		log.Printf("Using DB_NAME from environment: %s", name)
+	}
+
+	// 5. 从环境变量覆盖 JWT 配置
+	if secret := os.Getenv("JWT_SECRET"); secret != "" {
+		cfg.JWT.Secret = secret
+	}
+
+	// 6. 从环境变量覆盖 MinIO 配置
+	if accessKey := os.Getenv("MINIO_ACCESS_KEY"); accessKey != "" {
+		cfg.Storage.MinIO.AccessKey = accessKey
+	}
+	if secretKey := os.Getenv("MINIO_SECRET_KEY"); secretKey != "" {
+		cfg.Storage.MinIO.SecretKey = secretKey
 	}
 
 	// 2. 初始化日志

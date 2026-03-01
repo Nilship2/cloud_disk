@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/spf13/viper"
 )
@@ -57,6 +58,24 @@ func Load(configPath ...string) (*Config, error) {
 	}
 
 	GlobalConfig = config
+	if host := os.Getenv("DB_HOST"); host != "" {
+		config.Database.Host = host
+	}
+	if port := os.Getenv("DB_PORT"); port != "" {
+		if p, err := strconv.Atoi(port); err == nil {
+			config.Database.Port = p
+		}
+	}
+	if user := os.Getenv("DB_USER"); user != "" {
+		config.Database.Username = user
+	}
+	if password := os.Getenv("DB_PASSWORD"); password != "" {
+		config.Database.Password = password
+	}
+	if name := os.Getenv("DB_NAME"); name != "" {
+		config.Database.Database = name
+	}
+
 	return config, nil
 }
 
