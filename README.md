@@ -64,7 +64,6 @@
 - **容器化**: Docker
 - **编排**: Docker Compose
 - **反向代理**: Nginx
-- **CI/CD**: GitHub Actions (可选)
 
 ## 🚀 快速开始
 
