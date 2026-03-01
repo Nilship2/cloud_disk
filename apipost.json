@@ -1,0 +1,1670 @@
+{
+  "info": {
+    "name": "云盘系统 API",
+    "description": "仿百度网盘的后端系统，支持文件存储、分享、收藏等功能",
+    "version": "1.0.0",
+    "baseUrl": "http://localhost:8080/api/v1"
+  },
+  "folders": [
+    {
+      "name": "01-用户管理",
+      "description": "用户注册、登录、个人信息管理"
+    },
+    {
+      "name": "02-文件管理",
+      "description": "文件上传、下载、列表、操作"
+    },
+    {
+      "name": "03-文件夹管理",
+      "description": "文件夹创建"
+    },
+    {
+      "name": "04-分享管理",
+      "description": "文件分享、访问、下载"
+    },
+    {
+      "name": "05-收藏管理",
+      "description": "文件收藏、取消、列表"
+    },
+    {
+      "name": "06-回收站管理",
+      "description": "回收站列表、恢复、彻底删除"
+    },
+    {
+      "name": "07-系统监控",
+      "description": "健康检查、系统统计"
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "健康检查",
+      "folder": "07-系统监控",
+      "method": "GET",
+      "url": "http://localhost:8080/health",
+      "description": "检查服务是否正常运行",
+      "headers": [],
+      "parameters": [],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "status": "healthy",
+            "timestamp": "2026-02-17T17:35:48.9297985+08:00",
+            "uptime": "9.2111707s"
+          }
+        }
+      ]
+    },
+    {
+      "name": "用户注册",
+      "folder": "01-用户管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/register",
+      "description": "注册新用户，用户名和邮箱必须唯一",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\",\n  \"confirm_password\": \"123456\"\n}"
+      },
+      "expects": [
+        {
+          "code": 201,
+          "jsonData": {
+            "code": 0,
+            "message": "创建成功",
+            "data": {
+              "id": 1,
+              "username": "testuser",
+              "email": "test@example.com",
+              "avatar": "",
+              "bio": "",
+              "capacity": 10737418240,
+              "used": 0,
+              "created_at": "2026-02-17T17:35:48.929Z"
+            }
+          }
+        },
+        {
+          "code": 400,
+          "jsonData": {
+            "code": 1001,
+            "message": "参数无效",
+            "error": "参数无效"
+          }
+        },
+        {
+          "code": 409,
+          "jsonData": {
+            "code": 2001,
+            "message": "用户已存在",
+            "error": "用户已存在"
+          }
+        }
+      ]
+    },
+    {
+      "name": "用户登录",
+      "folder": "01-用户管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/login",
+      "description": "用户登录，返回JWT令牌",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"123456\"\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+              "expires_at": "2026-02-18T17:35:48.929Z",
+              "user": {
+                "id": 1,
+                "username": "testuser",
+                "email": "test@example.com",
+                "avatar": "",
+                "bio": "",
+                "capacity": 10737418240,
+                "used": 0,
+                "created_at": "2026-02-17T17:35:48.929Z"
+              }
+            }
+          }
+        },
+        {
+          "code": 401,
+          "jsonData": {
+            "code": 2003,
+            "message": "密码错误",
+            "error": "密码错误"
+          }
+        },
+        {
+          "code": 404,
+          "jsonData": {
+            "code": 2002,
+            "message": "用户不存在",
+            "error": "用户不存在"
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取当前用户信息",
+      "folder": "01-用户管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/profile",
+      "description": "获取当前登录用户的详细信息，需要认证",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "id": 1,
+              "username": "testuser",
+              "email": "test@example.com",
+              "avatar": "",
+              "bio": "",
+              "capacity": 10737418240,
+              "used": 0,
+              "created_at": "2026-02-17T17:35:48.929Z"
+            }
+          }
+        },
+        {
+          "code": 401,
+          "jsonData": {
+            "code": 1005,
+            "message": "未授权访问",
+            "error": "未授权访问"
+          }
+        }
+      ]
+    },
+    {
+      "name": "更新个人信息",
+      "folder": "01-用户管理",
+      "method": "PUT",
+      "url": "http://localhost:8080/api/v1/profile",
+      "description": "更新当前用户的头像和个人简介",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"avatar\": \"https://example.com/avatar.jpg\",\n  \"bio\": \"这是一个测试用户的个人简介\"\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "修改密码",
+      "folder": "01-用户管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/change-password",
+      "description": "修改当前用户的密码",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"old_password\": \"123456\",\n  \"new_password\": \"newpassword123\",\n  \"confirm_password\": \"newpassword123\"\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        },
+        {
+          "code": 401,
+          "jsonData": {
+            "code": 2003,
+            "message": "密码错误",
+            "error": "密码错误"
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取存储空间信息",
+      "folder": "01-用户管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/storage",
+      "description": "获取当前用户的存储空间使用情况",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "capacity": 10737418240,
+              "used": 1048576,
+              "available": 10736369664,
+              "usage_rate": 0.0098,
+              "file_count": 5,
+              "folder_count": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "上传文件",
+      "folder": "02-文件管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/files/upload",
+      "description": "上传文件到指定目录",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "form-data",
+      "body": {
+        "mode": "form-data",
+        "formdata": [
+          {
+            "key": "file",
+            "type": "file",
+            "value": "",
+            "description": "要上传的文件"
+          },
+          {
+            "key": "parent_id",
+            "type": "text",
+            "value": "",
+            "description": "父目录ID（可选）"
+          }
+        ]
+      },
+      "expects": [
+        {
+          "code": 201,
+          "jsonData": {
+            "code": 0,
+            "message": "创建成功",
+            "data": {
+              "id": "550e8400-e29b-41d4-a716-446655440000",
+              "filename": "test.txt",
+              "path": "user_1/550e8400-e29b-41d4-a716-446655440000/test.txt",
+              "size": 1024,
+              "size_text": "1 KB",
+              "mime_type": "text/plain",
+              "extension": "txt",
+              "is_dir": false,
+              "parent_id": null,
+              "url": "/files/user_1/550e8400-e29b-41d4-a716-446655440000/test.txt",
+              "created_at": "2026-02-17T17:35:48.929Z",
+              "updated_at": "2026-02-17T17:35:48.929Z"
+            }
+          }
+        },
+        {
+          "code": 507,
+          "jsonData": {
+            "code": 3006,
+            "message": "存储空间不足",
+            "error": "存储空间不足"
+          }
+        }
+      ]
+    },
+    {
+      "name": "秒传文件",
+      "folder": "02-文件管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/files/instant",
+      "description": "通过文件哈希秒传文件（文件已存在时）",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"hash\": \"d41d8cd98f00b204e9800998ecf8427e\",\n  \"filename\": \"duplicate.txt\",\n  \"parent_id\": \"\"\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "id": "660e8400-e29b-41d4-a716-446655440001",
+              "filename": "duplicate.txt",
+              "size": 1024,
+              "size_text": "1 KB",
+              "url": "/files/user_1/660e8400-e29b-41d4-a716-446655440001/duplicate.txt"
+            }
+          }
+        },
+        {
+          "code": 404,
+          "jsonData": {
+            "code": 3004,
+            "message": "文件不存在",
+            "error": "file not found for instant upload"
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取文件列表",
+      "folder": "02-文件管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/files",
+      "description": "获取当前目录下的文件和文件夹列表，支持分页和排序",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "parent_id",
+          "value": "",
+          "type": "query",
+          "description": "父目录ID（可选）"
+        },
+        {
+          "key": "page",
+          "value": "1",
+          "type": "query",
+          "description": "页码，默认1"
+        },
+        {
+          "key": "page_size",
+          "value": "20",
+          "type": "query",
+          "description": "每页数量，默认20，最大100"
+        },
+        {
+          "key": "order_by",
+          "value": "created_at",
+          "type": "query",
+          "description": "排序字段：filename/size/created_at/updated_at"
+        },
+        {
+          "key": "order",
+          "value": "desc",
+          "type": "query",
+          "description": "排序方式：asc/desc"
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "total": 10,
+              "page": 1,
+              "page_size": 20,
+              "files": [
+                {
+                  "id": "550e8400-e29b-41d4-a716-446655440000",
+                  "filename": "test.txt",
+                  "size": 1024,
+                  "size_text": "1 KB",
+                  "is_dir": false,
+                  "url": "/files/user_1/550e8400-e29b-41d4-a716-446655440000/test.txt",
+                  "created_at": "2026-02-17T17:35:48.929Z"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "检查文件是否存在（秒传）",
+      "folder": "02-文件管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/files/check",
+      "description": "通过哈希检查文件是否存在，用于秒传",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "hash",
+          "value": "",
+          "type": "query",
+          "description": "文件MD5哈希值",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "id": "550e8400-e29b-41d4-a716-446655440000",
+              "filename": "existing.txt",
+              "size": 1024
+            }
+          }
+        },
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取文件详情",
+      "folder": "02-文件管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/files/:id",
+      "description": "获取单个文件的详细信息",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "文件ID",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "id": "550e8400-e29b-41d4-a716-446655440000",
+              "filename": "test.txt",
+              "path": "user_1/550e8400-e29b-41d4-a716-446655440000/test.txt",
+              "size": 1024,
+              "size_text": "1 KB",
+              "mime_type": "text/plain",
+              "extension": "txt",
+              "is_dir": false,
+              "url": "/files/user_1/550e8400-e29b-41d4-a716-446655440000/test.txt",
+              "created_at": "2026-02-17T17:35:48.929Z"
+            }
+          }
+        },
+        {
+          "code": 404,
+          "jsonData": {
+            "code": 3004,
+            "message": "文件不存在",
+            "error": "文件不存在"
+          }
+        }
+      ]
+    },
+    {
+      "name": "下载文件",
+      "folder": "02-文件管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/files/:id/download",
+      "description": "下载文件（重定向到文件URL）",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "文件ID",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 302,
+          "description": "重定向到文件URL"
+        },
+        {
+          "code": 404,
+          "jsonData": {
+            "code": 3004,
+            "message": "文件不存在",
+            "error": "文件不存在"
+          }
+        }
+      ]
+    },
+    {
+      "name": "删除文件（移入回收站）",
+      "folder": "02-文件管理",
+      "method": "DELETE",
+      "url": "http://localhost:8080/api/v1/files/:id",
+      "description": "将文件移入回收站（软删除）",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "文件ID",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        },
+        {
+          "code": 404,
+          "jsonData": {
+            "code": 3004,
+            "message": "文件不存在",
+            "error": "文件不存在"
+          }
+        }
+      ]
+    },
+    {
+      "name": "批量删除文件",
+      "folder": "02-文件管理",
+      "method": "DELETE",
+      "url": "http://localhost:8080/api/v1/files/batch",
+      "description": "批量将文件移入回收站",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"file_ids\": [\n    \"550e8400-e29b-41d4-a716-446655440000\",\n    \"660e8400-e29b-41d4-a716-446655440001\"\n  ]\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "重命名文件",
+      "folder": "02-文件管理",
+      "method": "PUT",
+      "url": "http://localhost:8080/api/v1/files/:id/rename",
+      "description": "重命名文件或文件夹",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "文件ID",
+          "required": true
+        }
+      ],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"new_name\": \"新文件名.txt\"\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "移动文件",
+      "folder": "02-文件管理",
+      "method": "PUT",
+      "url": "http://localhost:8080/api/v1/files/:id/move",
+      "description": "移动文件到其他文件夹",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "文件ID",
+          "required": true
+        }
+      ],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"target_parent_id\": \"770e8400-e29b-41d4-a716-446655440002\"\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "创建文件夹",
+      "folder": "03-文件夹管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/folders",
+      "description": "创建新的文件夹",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"name\": \"照片\",\n  \"parent_id\": \"\"\n}"
+      },
+      "expects": [
+        {
+          "code": 201,
+          "jsonData": {
+            "code": 0,
+            "message": "创建成功",
+            "data": {
+              "id": "880e8400-e29b-41d4-a716-446655440003",
+              "filename": "照片",
+              "size": 0,
+              "size_text": "0 B",
+              "is_dir": true,
+              "created_at": "2026-02-17T17:35:48.929Z"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "创建分享",
+      "folder": "04-分享管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/shares",
+      "description": "创建文件分享链接",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"file_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"password\": \"123456\",\n  \"expire_days\": 7,\n  \"max_downloads\": 10\n}"
+      },
+      "expects": [
+        {
+          "code": 201,
+          "jsonData": {
+            "code": 0,
+            "message": "创建成功",
+            "data": {
+              "id": 1,
+              "token": "a1b2c3d4e5f6g7h8i9j0",
+              "file_id": "550e8400-e29b-41d4-a716-446655440000",
+              "filename": "test.txt",
+              "file_size": 1024,
+              "file_size_text": "1 KB",
+              "expire_time": "2026-02-24T17:35:48.929Z",
+              "max_downloads": 10,
+              "download_count": 0,
+              "status": 1,
+              "share_link": "http://localhost:8080/s/a1b2c3d4e5f6g7h8i9j0",
+              "created_at": "2026-02-17T17:35:48.929Z"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取分享列表",
+      "folder": "04-分享管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/shares",
+      "description": "获取当前用户的分享列表",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "page",
+          "value": "1",
+          "type": "query",
+          "description": "页码"
+        },
+        {
+          "key": "page_size",
+          "value": "20",
+          "type": "query",
+          "description": "每页数量"
+        },
+        {
+          "key": "status",
+          "value": "0",
+          "type": "query",
+          "description": "状态：0-全部，1-有效，2-已取消"
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "total": 5,
+              "page": 1,
+              "page_size": 20,
+              "shares": [
+                {
+                  "id": 1,
+                  "token": "a1b2c3d4...",
+                  "filename": "test.txt",
+                  "share_link": "http://localhost:8080/s/a1b2c3d4..."
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取分享详情",
+      "folder": "04-分享管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/shares/:id",
+      "description": "获取单个分享的详细信息",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "分享ID",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "id": 1,
+              "token": "a1b2c3d4e5f6g7h8i9j0",
+              "filename": "test.txt",
+              "share_link": "http://localhost:8080/s/a1b2c3d4e5f6g7h8i9j0"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "更新分享",
+      "folder": "04-分享管理",
+      "method": "PUT",
+      "url": "http://localhost:8080/api/v1/shares/:id",
+      "description": "更新分享的密码、过期时间等设置",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "分享ID",
+          "required": true
+        }
+      ],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"password\": \"newpassword\",\n  \"max_downloads\": 20\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "取消分享",
+      "folder": "04-分享管理",
+      "method": "DELETE",
+      "url": "http://localhost:8080/api/v1/shares/:id",
+      "description": "取消分享（状态改为已取消）",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "分享ID",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "访问分享（公开）",
+      "folder": "04-分享管理",
+      "method": "GET",
+      "url": "http://localhost:8080/s/:token",
+      "description": "通过token访问分享的文件信息（无需认证）",
+      "headers": [],
+      "parameters": [
+        {
+          "key": "token",
+          "value": "",
+          "type": "path",
+          "description": "分享令牌",
+          "required": true
+        },
+        {
+          "key": "password",
+          "value": "",
+          "type": "query",
+          "description": "访问密码（如果需要）"
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "token": "a1b2c3d4...",
+              "file": {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "filename": "test.txt",
+                "size": 1024,
+                "size_text": "1 KB"
+              },
+              "download_left": 9,
+              "need_password": false
+            }
+          }
+        },
+        {
+          "code": 200,
+          "jsonData": {
+            "token": "a1b2c3d4...",
+            "need_password": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "下载分享文件（公开）",
+      "folder": "04-分享管理",
+      "method": "GET",
+      "url": "http://localhost:8080/s/:token/download",
+      "description": "通过token下载分享的文件（无需认证）",
+      "headers": [],
+      "parameters": [
+        {
+          "key": "token",
+          "value": "",
+          "type": "path",
+          "description": "分享令牌",
+          "required": true
+        },
+        {
+          "key": "password",
+          "value": "",
+          "type": "query",
+          "description": "访问密码（如果需要）"
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 302,
+          "description": "重定向到文件"
+        },
+        {
+          "code": 403,
+          "jsonData": {
+            "code": 4002,
+            "message": "密码错误",
+            "error": "密码错误"
+          }
+        }
+      ]
+    },
+    {
+      "name": "添加收藏",
+      "folder": "05-收藏管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/favorites",
+      "description": "收藏文件",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"file_id\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+      },
+      "expects": [
+        {
+          "code": 201,
+          "jsonData": {
+            "code": 0,
+            "message": "创建成功",
+            "data": {
+              "id": 1,
+              "file": {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "filename": "test.txt",
+                "size": 1024
+              },
+              "created_at": "2026-02-17T17:35:48.929Z"
+            }
+          }
+        },
+        {
+          "code": 409,
+          "jsonData": {
+            "code": 2001,
+            "message": "文件已收藏",
+            "error": "文件已收藏"
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取收藏列表",
+      "folder": "05-收藏管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/favorites",
+      "description": "获取当前用户的收藏列表",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "page",
+          "value": "1",
+          "type": "query",
+          "description": "页码"
+        },
+        {
+          "key": "page_size",
+          "value": "20",
+          "type": "query",
+          "description": "每页数量"
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "total": 5,
+              "page": 1,
+              "page_size": 20,
+              "favorites": [
+                {
+                  "id": 1,
+                  "file": {
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "filename": "test.txt"
+                  },
+                  "created_at": "2026-02-17T17:35:48.929Z"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "检查是否已收藏",
+      "folder": "05-收藏管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/favorites/check",
+      "description": "检查文件是否已被当前用户收藏",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "file_id",
+          "value": "",
+          "type": "query",
+          "description": "文件ID",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": true
+          }
+        },
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "取消收藏",
+      "folder": "05-收藏管理",
+      "method": "DELETE",
+      "url": "http://localhost:8080/api/v1/favorites/:file_id",
+      "description": "取消收藏文件",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "file_id",
+          "value": "",
+          "type": "path",
+          "description": "文件ID",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取回收站列表",
+      "folder": "06-回收站管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/trash",
+      "description": "获取已删除的文件列表",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "page",
+          "value": "1",
+          "type": "query",
+          "description": "页码"
+        },
+        {
+          "key": "page_size",
+          "value": "20",
+          "type": "query",
+          "description": "每页数量"
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "total": 3,
+              "page": 1,
+              "page_size": 20,
+              "items": [
+                {
+                  "id": "550e8400-e29b-41d4-a716-446655440000",
+                  "filename": "deleted.txt",
+                  "size": 1024,
+                  "size_text": "1 KB",
+                  "deleted_at": "2026-02-17T17:35:48.929Z",
+                  "expire_in": 28
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取回收站统计",
+      "folder": "06-回收站管理",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/trash/stats",
+      "description": "获取回收站文件数量和总大小",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "count": 3,
+              "size": 3072,
+              "size_text": "3 KB"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "恢复文件",
+      "folder": "06-回收站管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/trash/:id/restore",
+      "description": "从回收站恢复文件",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "文件ID",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "批量恢复",
+      "folder": "06-回收站管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/trash/batch/restore",
+      "description": "批量从回收站恢复文件",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"file_ids\": [\n    \"550e8400-e29b-41d4-a716-446655440000\",\n    \"660e8400-e29b-41d4-a716-446655440001\"\n  ]\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "彻底删除",
+      "folder": "06-回收站管理",
+      "method": "DELETE",
+      "url": "http://localhost:8080/api/v1/trash/:id",
+      "description": "彻底删除文件（不可恢复）",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "id",
+          "value": "",
+          "type": "path",
+          "description": "文件ID",
+          "required": true
+        }
+      ],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "批量彻底删除",
+      "folder": "06-回收站管理",
+      "method": "DELETE",
+      "url": "http://localhost:8080/api/v1/trash/batch",
+      "description": "批量彻底删除文件",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json",
+          "description": "JSON格式"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "json",
+      "body": {
+        "mode": "raw",
+        "raw": "{\n  \"file_ids\": [\n    \"550e8400-e29b-41d4-a716-446655440000\",\n    \"660e8400-e29b-41d4-a716-446655440001\"\n  ]\n}"
+      },
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "清空回收站",
+      "folder": "06-回收站管理",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/trash/clean",
+      "description": "清空回收站所有文件",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "cleaned_count": 3,
+              "freed_space": 3072,
+              "freed_space_text": "3 KB"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "系统统计信息",
+      "folder": "07-系统监控",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/monitor/stats",
+      "description": "获取系统运行统计信息",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "uptime": "1h2m3s",
+              "go_version": "go1.21",
+              "num_goroutine": 12,
+              "cpu_usage": 2.5,
+              "user_count": 10,
+              "file_count": 25,
+              "share_count": 5,
+              "total_storage": 107374182400,
+              "used_storage": 524288000
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "数据库统计",
+      "folder": "07-系统监控",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/monitor/db",
+      "description": "获取数据库连接池统计",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer {{token}}",
+          "description": "JWT令牌"
+        }
+      ],
+      "parameters": [],
+      "bodyType": "none",
+      "expects": [
+        {
+          "code": 200,
+          "jsonData": {
+            "code": 0,
+            "message": "success",
+            "data": {
+              "open_connections": 5,
+              "in_use": 2,
+              "idle": 3,
+              "wait_count": 0
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "key": "token",
+      "value": "",
+      "description": "JWT认证令牌，登录后获取"
+    }
+  ]
+}

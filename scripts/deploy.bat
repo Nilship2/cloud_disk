@@ -64,7 +64,7 @@ if %errorlevel% neq 0 (
 echo %GREEN%✓ 容器启动成功%NC%
 echo.
 
-echo %YELLOW%6. 等待服务启动...%NC%
+echo %YELLOW%6. 等待服务启动...%NC% 
 timeout /t 10 /nobreak >nul
 
 echo %YELLOW%7. 健康检查...%NC%
